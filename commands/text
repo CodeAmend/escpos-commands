@@ -1,5 +1,4 @@
 #!/bin/bash
-source ./utils.sh
 
 if [ $# -ne 1 ]; then
   echo -e "$(color 31)$(base $0)$(end_color) Usage: $(color 34)<text>$(end_color)"

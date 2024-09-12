@@ -1,3 +1,4 @@
+#!/bin/bash
 # Function: print_image_by_id
 # Prints an image stored in the printer's memory by its ID
 print_image_by_id() {

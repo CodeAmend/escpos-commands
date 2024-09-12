@@ -1,3 +1,4 @@
+#!/bin/bash
 
 color() {
     local color_code="$1"
