@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Function: break
+# Default to 1 line break if no argument is provided
+break() {
+  local lines="${1:-1}"  # Default to 1 line break
+
+  for (( i=0; i<$lines; i++ )); do
+    echo -ne '\n'
+  done
+}

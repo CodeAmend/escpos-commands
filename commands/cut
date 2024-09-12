@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Function: cut
+# Default to full cut if no argument is provided
+cut() {
+  local cut_type="${1:-1}"  # Default to 1 (full cut)
+
+  if [[ "$cut_type" -eq 1 ]]; then
+    echo -ne '\x1D\x56\x00'  # Full cut
+  else
+    echo -ne '\x1D\x56\x01'  # Partial cut
+  fi
+}
