@@ -1,0 +1,9 @@
+#!/bin/bash
+source ./utils.sh
+
+if [ $# -ne 1 ]; then
+  echo -e "$(color 31)$(base $0)$(end_color) Usage: $(color 34)<text>$(end_color)"
+  exit 1
+fi
+
+echo -ne "\x1BA\x00\x1BM\x00$1"
