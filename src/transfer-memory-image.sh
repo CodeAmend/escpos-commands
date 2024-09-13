@@ -14,7 +14,7 @@ fi
 image_id_hex=$(printf '%02X' "$image_id")
 
 # Call the Python script to convert the image to monochrome and get the image data
-image_data=$(python3 ../convert_image.py "$bmp_file")
+image_data=$(python3 ../util/convert_image.py "$bmp_file")
 
 # Check if the conversion was successful
 if [[ -z "$image_data" ]]; then

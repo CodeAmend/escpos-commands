@@ -17,7 +17,7 @@ def convert_image_to_monochrome(image_path):
 
     # Convert image data to a list of bytes
     img_data = bytearray()
-    
+
     # Iterate through each row of the image
     for y in range(height):
         row = []
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         print("Usage: python convert_image.py <path_to_image>")
         sys.exit(1)
-    
+
     image_path = sys.argv[1]
     image_data = convert_image_to_monochrome(image_path)
     print(image_data)

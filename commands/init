@@ -1,5 +1,0 @@
-#!/bin/bash
-
-init() {
-  echo -en "\x1B@"
-}

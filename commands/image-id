@@ -1,9 +1,0 @@
-#!/bin/bash
-# Function: print_image_by_id
-# Prints an image stored in the printer's memory by its ID
-print_image_by_id() {
-  local image_id="$1"
-
-  # ESC/POS command to print an image from memory
-  echo -ne "\x1C\x70${image_id}\x00"  # ESC (0x1C) 'p' image print command
-}
