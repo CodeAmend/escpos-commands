@@ -49,6 +49,19 @@ qrcode() {
 # Print image from memory by ID
 print_image_by_id() {
   local image_id="$1"
-  echo -ne "\x1C\x70\x$(printf '%02X' $image_id)\x00"
+  
+  # Ensure image_id is two characters long
+  if [ ${#image_id} -ne 2 ]; then
+    echo "Error: image_id must be exactly two ASCII characters."
+    return 1
+  fi
+
+  # Get ASCII values of the two characters
+  local kc1=$(printf "%d" "'${image_id:0:1}")  # First character
+  local kc2=$(printf "%d" "'${image_id:1:1}")  # Second character
+
+  # Print the command to print image by its ID
+  echo -ne "\x1C\x70\x$(printf '%02X' $kc1)\x$(printf '%02X' $kc2)\x00"
 }
+
 
