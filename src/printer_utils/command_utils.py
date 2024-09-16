@@ -89,3 +89,30 @@ def construct_check_memory_command():
 
     return check_command
 
+def construct_print_command(image_id):
+    """
+    Construct the ESC/POS command to print an NV image by its image ID.
+    """
+    if len(image_id) != 2:
+        raise ValueError("image_id must be exactly two ASCII characters.")
+
+    # GS ( L pL pH m fn a kc1 kc2
+    print_command = bytearray()
+
+    # GS ( L command
+    print_command.extend(b'\x1D\x28\x4C')
+
+    # Parameter length (4 bytes)
+    pL = 4
+    pH = 0
+    print_command.extend([pL, pH])
+
+    # m = 0x30, fn = 0x45 (print NV image), a = 0x32 (print the stored image)
+    print_command.extend(b'\x30\x45\x32')
+
+    # kc1 and kc2 (key codes from the image_id)
+    kc1 = ord(image_id[0])
+    kc2 = ord(image_id[1])
+    print_command.extend([kc1, kc2])
+
+    return print_command
