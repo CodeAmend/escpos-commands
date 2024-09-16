@@ -56,13 +56,13 @@ print_image_by_id() {
   fi
 
   # Get ASCII values of the two characters
-  local kc1=$(printf "%d" "'${image_id:0:1}")  # First character
-  local kc2=$(printf "%d" "'${image_id:1:1}")  # Second character
+  local kc1=$(printf "%02X" "'${image_id:0:1}")  # ASCII code of first character
+  local kc2=$(printf "%02X" "'${image_id:1:1}")  # ASCII code of second character
 
   # Construct the command
   # GS ( L pL pH m fn a kc1 kc2
   echo -ne "\x1D\x28\x4C\x04\x00\x30\x45\x32"
-  echo -ne "$(printf \\x%02X $kc1)"
-  echo -ne "$(printf \\x%02X $kc2)"
+  echo -ne "\x$kc1"
+  echo -ne "\x$kc2"
 }
 
