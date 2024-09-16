@@ -1,4 +1,3 @@
-# printer_utils/command_utils.py
 def construct_store_command(image_data, image_id, width, height):
     # Check that image_id is exactly two characters long
     if len(image_id) != 2:
@@ -48,4 +47,45 @@ def construct_store_command(image_data, image_id, width, height):
     store_command.extend(image_data)
 
     return store_command
+
+def construct_delete_command(image_id):
+    # Check that image_id is exactly two characters long
+    if len(image_id) != 2:
+        raise ValueError("image_id must be exactly two ASCII characters.")
+
+    delete_command = bytearray()
+
+    # GS ( L - Delete NV Image command
+    delete_command.extend(b'\x1D\x28\x4C')
+
+    # pL and pH for delete command (always 5 bytes of data)
+    pL = 5 & 0xFF
+    pH = (5 >> 8) & 0xFF
+    delete_command.extend([pL, pH])
+
+    # m and fn for delete function (68 in this case)
+    delete_command.extend(b'\x30\x44')  # m = 0x30 ('0'), fn = 0x44 ('D')
+
+    # kc1 and kc2 (Key codes from image_id)
+    kc1 = ord(image_id[0])  # Convert first ASCII character to byte
+    kc2 = ord(image_id[1])  # Convert second ASCII character to byte
+    delete_command.extend([kc1, kc2])
+
+    return delete_command
+
+def construct_check_memory_command():
+    check_command = bytearray()
+
+    # GS ( L - Check NV Memory command
+    check_command.extend(b'\x1D\x28\x4C')
+
+    # pL and pH for check memory command (always 2 bytes of data)
+    pL = 2 & 0xFF
+    pH = (2 >> 8) & 0xFF
+    check_command.extend([pL, pH])
+
+    # m and fn for checking memory
+    check_command.extend(b'\x30\x45')  # m = 0x30 ('0'), fn = 0x45 ('E')
+
+    return check_command
 
