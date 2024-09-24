@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Source the commands
-source src/commands.sh
+source commands.sh
 
 ver=1
 qrsize=15
