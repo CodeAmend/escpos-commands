@@ -1,16 +1,16 @@
 import sys
 from printer_utils.image_processing import process_image_to_raster
-from commands_nv import construct_store_command
 
-# from commands_nv import construct_store_command
+from commands_nv import construct_print_command
+from commands_nv import construct_store_command
 # from commands_nv import construct_delete_command
 # from commands_nv import construct_check_memory_command
 
 
 if __name__ == "__main__":
 
-    image_path = 'images/small-icon.bmp'
-    image_id = 'AB'  # Image ID must be two ASCII characters
+    image_path = '../../LC-man-450.bmp'
+    image_id = 'AA'  # Image ID must be two ASCII characters
 
     width, height, img_data = process_image_to_raster(image_path)
 

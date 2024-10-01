@@ -116,16 +116,20 @@ def construct_print_command(image_id):
     print_command.extend(b'\x1D\x28\x4C')
 
     # Parameter length (4 bytes)
-    pL = 4
+    pL = 6
     pH = 0
     print_command.extend([pL, pH])
 
-    # m = 0x30, fn = 0x45 (print NV image), a = 0x32 (print the stored image)
-    print_command.extend(b'\x30\x45\x32')
+    # m = 0x30, fn = 0x45 (print NV image)
+    print_command.extend(b'\x30\x45')
 
     # kc1 and kc2 (key codes from the image_id)
     kc1 = ord(image_id[0])
     kc2 = ord(image_id[1])
     print_command.extend([kc1, kc2])
+
+    #image scaling x and y dimensions
+    print_command.extend(b'\x01\x01')
+
 
     return print_command

@@ -3,6 +3,7 @@
 # Initialize printer
 init() {
   echo -ne "\x1B@"
+  echo -ne "\x1B\x61\x01"  # Center alignment
 }
 
 # Print text
@@ -61,8 +62,9 @@ print_image_by_id() {
 
   # Construct the command
   # GS ( L pL pH m fn a kc1 kc2
-  echo -ne "\x1D\x28\x4C\x04\x00\x30\x45\x32"
+  echo -ne "\x1D\x28\x4C\x06\x00\x30\x45"
   echo -ne "\x$kc1"
   echo -ne "\x$kc2"
+  echo -ne "\x01\x01"
 }
 
