@@ -51,6 +51,27 @@ function convertForESCPOSFunction(image) {
   return Buffer.concat(imageData); // Return the raw image data as a single buffer
 }
 
+// Function to generate ESC/POS commands for printing the image
+function getImageESCPosCommands(imageBytes, width, height) {
+  const density = 0x00; // Single density mode
+  const widthBytes = Math.ceil(width / 8); // Width in bytes (1 byte = 8 pixels)
+
+  // ESC/POS header for raster graphics printing
+  const escPosHeader = Buffer.from([
+    0x1d,
+    0x76,
+    0x30,
+    density, // Command for raster graphics
+    widthBytes % 256, // Width low byte
+    widthBytes / 256, // Width high byte
+    height % 256, // Height low byte
+    height / 256, // Height high byte
+  ]);
+
+  // Combine the ESC/POS header and the image data
+  return Buffer.concat([escPosHeader, imageBytes]);
+}
+
 // Test the function
 (async function test() {
   const resize = 0;
@@ -63,13 +84,21 @@ function convertForESCPOSFunction(image) {
   const image = await processImage(base64Buffer, undefined || resize); // Resize to 300px width
 
   // Step 3: Convert the processed image to ESC/POS-compatible data
-  const escposData = convertForESCPOSFunction(image);
+  const escposImageData = convertForESCPOSFunction(image);
 
   // Step 4: Output the ESC/POS data to stdout
-  process.stdout.write(escposData);
-
-  console.log(
-    `Processed image with dimensions: ${image.bitmap.width}x${image.bitmap.height}`
+  const escposCommands = getImageESCPosCommands(
+    escposImageData,
+    image.bitmap.width,
+    image.bitmap.height
   );
-  console.log(`ESC/POS image data size: ${escposData.length} bytes`);
+
+  // Step 5: Output the ESC/POS data for piping
+  process.stdout.write(escposCommands);
+
+  //console.log(
+  //  `Processed image with dimensions: ${image.bitmap.width}x${image.bitmap.height}`
+  //);
+  //console.log(`ESC/POS image data size: ${escposImageData.length} bytes`);
+  //console.log(`ESC/POS data size: ${escposImageData.length} bytes`);
 })();
