@@ -68,3 +68,55 @@ print_image_by_id() {
   echo -ne "\x01\x01"
 }
 
+print_image() {
+  local pathToByteData="$1"
+  local width="$2"
+
+  # Read the BMP file in binary mode
+  local byteData=$(xxd -p -c 1 "$pathToByteData")
+
+  # Calculate height based on byte data length and width
+  local height=$(($(stat -f %z "$pathToByteData") / width))
+
+  # ESC/POS command for raster bit image mode
+  local esc_pos_cmd=$(echo -ne '\x1D\x76\x30\x00')
+
+  # Width and height in bytes (in pixels)
+  local width_bytes=$(printf "%02x" $((width / 8)))
+  local height_bytes=$(printf "%02x" $height)
+
+  # Send ESC/POS command for printing the image
+  echo -ne "$esc_pos_cmd"
+  echo -ne "\x00$width_bytes\x00$height_bytes\x00"
+  
+  # Send the image byte data as raw binary
+  cat "$pathToByteData"
+}
+
+
+#!/bin/bash
+
+print_image_file() {
+  local pathToBmpFile="$1"
+  
+  # Read the BMP file header to get width and height
+  local width=$(xxd -p -s 18 -l 4 "$pathToBmpFile" | xxd -r -p | od -An -t u4)
+  local height=$(xxd -p -s 22 -l 4 "$pathToBmpFile" | xxd -r -p | od -An -t u4)
+
+  # ESC/POS command for raster bit image mode
+  local esc_pos_cmd=$(echo -ne '\x1D\x76\x30\x00')
+
+  # Width in bytes (1 byte = 8 pixels)
+  local width_bytes=$(printf "%02x" $((width / 8)))
+
+  # Height in bytes
+  local height_bytes=$(printf "%02x" $height)
+
+  # Send ESC/POS command
+  echo -ne "$esc_pos_cmd"
+  echo -ne "\x00$width_bytes\x00$height_bytes\x00"
+
+  # Read BMP file's pixel data (skipping the BMP header) and send it
+  dd if="$pathToBmpFile" bs=1 skip=54 | lp -d EPSON_TM_T88V
+}
+
