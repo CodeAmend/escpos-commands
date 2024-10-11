@@ -1,0 +1,171 @@
+const fs = require("fs");
+const util = require("util");
+const potrace = require("potrace");
+const sharp = require("sharp");
+
+// Function to read base64-encoded image and return raw buffer
+async function getBase64BufferFromFile(filePath) {
+  const readFile = util.promisify(fs.readFile);
+  const data = await readFile(filePath, "utf8");
+  const base64Data = data.replace(/^data:image\/bmp;base64,/, ""); // Remove base64 prefix if it exists
+  return Buffer.from(base64Data, "base64"); // Return raw binary buffer
+}
+
+// Function to convert PNG to SVG using Potrace
+function convertPNGToSVG(pngBuffer) {
+  return new Promise((resolve, reject) => {
+    potrace.trace(
+      pngBuffer,
+      {
+        optTolerance: 0.2,
+        threshold: 128,
+        turnPolicy: potrace.Potrace.TURNPOLICY_MINORITY,
+      },
+      (err, svg) => {
+        if (err) {
+          return reject("Error during PNG to SVG conversion: " + err);
+        }
+        resolve(svg);
+      }
+    );
+  });
+}
+
+// Convert SVG to PNG using Sharp for rasterization
+async function convertSVGToPNG(svgData) {
+  return sharp(Buffer.from(svgData)).png().toBuffer();
+}
+
+// Function to convert raster image to ESC/POS data
+async function convertToEscPos(pngBuffer) {
+  const png = await sharp(pngBuffer)
+    .threshold(128)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const { data, info } = png;
+  const widthBytes = Math.ceil(info.width / 8);
+
+  let escPosData = [];
+
+  for (let y = 0; y < info.height; y++) {
+    let rowBytes = [];
+    for (let x = 0; x < info.width; x += 8) {
+      let byte = 0;
+      for (let bit = 0; bit < 8; bit++) {
+        if (x + bit < info.width) {
+          const pixelIndex = (y * info.width + (x + bit)) * info.channels;
+          const pixelValue = data[pixelIndex]; // Grayscale value
+          if (pixelValue < 128) {
+            // Dark pixel
+            byte |= 1 << (7 - bit);
+          }
+        }
+      }
+      rowBytes.push(byte);
+    }
+    escPosData.push(Buffer.from(rowBytes));
+  }
+
+  // ESC/POS commands to print the raster graphics
+  const density = 0x00; // Single density mode
+  const escPosHeader = Buffer.from([
+    0x1d,
+    0x76,
+    0x30,
+    density, // Raster print command
+    widthBytes % 256, // Width low byte
+    Math.floor(widthBytes / 256), // Width high byte
+    info.height % 256, // Height low byte
+    Math.floor(info.height / 256), // Height high byte
+  ]);
+
+  return Buffer.concat([escPosHeader, ...escPosData]);
+}
+
+// Main function to decode, convert, rasterize, and print
+(async function () {
+  const base64Path = "../images/signature/big-sig.b64"; // Your base64 file path
+  const base64Buffer = await getBase64BufferFromFile(base64Path);
+
+  // Step 1: Convert the BMP to PNG
+  const pngBuffer = base64Buffer; // Using the original PNG in this example, you can modify as needed
+
+  // Step 2: Convert the PNG buffer to SVG using Potrace
+  const svgData = await convertPNGToSVG(pngBuffer);
+
+  // Step 3: Convert SVG to PNG (Rasterized image)
+  const rasterizedPNGBuffer = await convertSVGToPNG(svgData);
+
+  // Step 4: Convert the raster PNG to ESC/POS format
+  const escPosData = await convertToEscPos(rasterizedPNGBuffer);
+
+  // Step 5: Output the ESC/POS data to stdout
+  process.stdout.write(escPosData);
+})();
+
+//const fs = require("fs");
+//const util = require("util");
+//const bmp = require("bmp-js");
+//const potrace = require("potrace");
+//const sharp = require("sharp");
+//
+//// Function to read base64-encoded image and return raw buffer
+//async function getBase64BufferFromFile(filePath) {
+//  const readFile = util.promisify(fs.readFile);
+//  const data = await readFile(filePath, "utf8");
+//  const base64Data = data.replace(/^data:image\/bmp;base64,/, ""); // Remove base64 prefix if it exists
+//  return Buffer.from(base64Data, "base64"); // Return raw binary buffer
+//}
+//
+//// Convert BMP to PNG using Sharp after decoding
+//async function convertBMPToPNG(bmpBuffer) {
+//  try {
+//    const bmpData = bmp.decode(bmpBuffer);
+//    const rawImageData = Buffer.from(bmpData.data);
+//
+//    // Use Sharp to convert the BMP raw data to a PNG buffer
+//    const pngBuffer = await sharp(rawImageData, {
+//      raw: {
+//        width: bmpData.width,
+//        height: bmpData.height,
+//        channels: 4, // RGBA channels in the BMP
+//      },
+//    })
+//      .png()
+//      .toBuffer();
+//
+//    return pngBuffer;
+//  } catch (error) {
+//    console.error("Error converting BMP to PNG:", error);
+//  }
+//}
+//
+//// Function to convert PNG to SVG using Potrace
+//function convertPNGToSVG(pngBuffer) {
+//  potrace.trace(pngBuffer, { optTolerance: 0.2 }, (err, svg) => {
+//    if (err) {
+//      console.error("Error during PNG to SVG conversion:", err);
+//      return;
+//    }
+//
+//    // Output the SVG
+//    console.log("SVG Output:", svg);
+//
+//    // Save the SVG to a file
+//    fs.writeFileSync("signature-output.svg", svg);
+//    console.log("SVG saved as signature-output.svg");
+//  });
+//}
+//
+//// Main function to decode, convert, and vectorize
+//(async function () {
+//  const base64Path = "../images/signature/big-sig.b64"; // Your base64 file path
+//  const base64Buffer = await getBase64BufferFromFile(base64Path);
+//
+//  // Step 1: Convert the decoded BMP buffer to PNG
+//  const pngBuffer = await convertBMPToPNG(base64Buffer);
+//
+//  // Step 2: Convert the PNG buffer to SVG using Potrace
+//  convertPNGToSVG(pngBuffer);
+//})();
