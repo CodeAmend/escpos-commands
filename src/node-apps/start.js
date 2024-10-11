@@ -11,15 +11,18 @@ async function getBase64BufferFromFile(filePath) {
 }
 
 // Function to process and resize the image
-async function processImage(base64Buffer, resizeWidth) {
+async function getJimpImage(base64Buffer) {
   const image = await Jimp.read(base64Buffer);
+  return image;
+}
 
+async function processImage(jimpImage, resizeWidth) {
   // Only resize if a resize width is specified
   if (resizeWidth > 0) {
-    image.resize(resizeWidth, Jimp.AUTO); // Resize to target width, maintain aspect ratio
+    jimpImage.resize(resizeWidth, Jimp.AUTO, Jimp.RESIZE_BICUBIC);
   }
 
-  return image; // Return the Jimp image object
+  return jimpImage; // Return the Jimp image object
 }
 
 // Function to convert processed image to raw image data for ESC/POS
@@ -96,34 +99,42 @@ function addCutCommand() {
   // Step 1: Get the base64 buffer from the file
   const base64Buffer = await getBase64BufferFromFile(base64Path);
 
-  // Step 2: Process the image (resize it if needed)
-  const image = await processImage(base64Buffer, targetWidth); // Set the targetWidth to fit or leave as 0
+  // Step 2: Get library image
+  const jimpImage = await getJimpImage(base64Buffer); // Set the targetWidth to fit or leave as 0
 
-  // Step 3: Convert the processed image to ESC/POS-compatible data
+  console.error("ESC/POS data size - BEFORE resize: ");
+  console.error(`${(base64Buffer.length / 1024).toFixed(2)} kbytes`);
+  console.error(`w x h: ${jimpImage.bitmap.width}x${jimpImage.bitmap.height}`);
+  console.error("\n");
+
+  // Step 3: Process the image (resize it if needed)
+  const image = await processImage(jimpImage, targetWidth); // Set the targetWidth to fit or leave as 0
+
+  // Step 4: Convert the processed image to ESC/POS-compatible data
   const escposImageData = convertForESCPOSFunction(image);
 
-  // Step 4: Output the ESC/POS data to stdout
+  // Step 5: Output the ESC/POS data to stdout
   const escposImageCommands = getImageESCPosCommands(
     escposImageData,
     image.bitmap.width,
     image.bitmap.height
   );
 
-  // Step 5: Add line breaks and cut command after the image data
+  // Step 6: Add line breaks and cut command after the image data
   const lineBreaks = addLineBreaks(2); // Add 5 line breaks
   const cutCommand = addCutCommand(); // Add cut command
 
-  // Combine the image commands, line breaks, and cut command
+  // Step 7: Combine the image commands, line breaks, and cut command
   const finalPrintData = Buffer.concat([
     escposImageCommands,
     lineBreaks,
     cutCommand,
   ]);
 
-  // Output the combined data for piping
-  process.stdout.write(finalPrintData);
+  console.error("ESC/POS data size - AFTER  resize: ");
+  console.error(`${(finalPrintData.length / 1024).toFixed(2)} kbytes`);
+  console.error(`w x h: ${image.bitmap.width}x${image.bitmap.height}`);
+  console.error("\n");
 
-  // Uncomment below if you want to see details
-  //console.log(`Image dimensions: ${image.bitmap.width}x${image.bitmap.height}`);
-  //console.log(`ESC/POS data size: ${finalPrintData.length} bytes`);
+  process.stdout.write(finalPrintData);
 })();
