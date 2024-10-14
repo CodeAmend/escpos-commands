@@ -1,0 +1,114 @@
+const Jimp = require("jimp");
+const {
+  getBase64BufferFromFile,
+  saveFile,
+  addLineBreaks,
+  addCutCommand,
+} = require("./shared-functions");
+
+// Function: Get Jimp Image
+async function getJimpImage(base64Buffer) {
+  return Jimp.read(base64Buffer);
+}
+
+async function processImage(jimpImage, resizeWidth) {
+  // Only resize if a resize width is specified
+  if (resizeWidth > 0) {
+    jimpImage.resize(resizeWidth, Jimp.AUTO, Jimp.RESIZE_NEAREST_NEIGHBOR);
+  }
+
+  return jimpImage; // Return the Jimp image object
+}
+// Function: Convert Jimp to ESC/POS binary data
+function convertForESCPOSFunction(image) {
+  const width = image.bitmap.width;
+  const height = image.bitmap.height;
+  const widthBytes = Math.ceil(width / 8);
+
+  let imageData = [];
+  for (let y = 0; y < height; y++) {
+    let rowBytes = [];
+    for (let x = 0; x < width; x += 8) {
+      let byte = 0;
+      for (let bit = 0; bit < 8; bit++) {
+        if (x + bit < width) {
+          const color = image.getPixelColor(x + bit, y);
+          const { r, g, b } = Jimp.intToRGBA(color);
+          const grayscale = 0.3 * r + 0.59 * g + 0.11 * b;
+          if (grayscale <= 128) byte |= 1 << (7 - bit);
+        }
+      }
+      rowBytes.push(byte);
+    }
+    imageData.push(Buffer.from(rowBytes));
+  }
+
+  return Buffer.concat(imageData);
+}
+
+// Function: Generate ESC/POS commands for printing the image
+function getImageESCPosCommands(imageBytes, width, height) {
+  const density = 0x00;
+  const widthBytes = Math.ceil(width / 8);
+
+  // ESC/POS header for raster graphics printing
+  const escPosHeader = Buffer.from([
+    0x1d,
+    0x76,
+    0x30,
+    density,
+    widthBytes % 256,
+    Math.floor(widthBytes / 256),
+    height % 256,
+    Math.floor(height / 256),
+  ]);
+
+  // Combine the ESC/POS header and the image data
+  return Buffer.concat([escPosHeader, imageBytes]);
+}
+
+// Main function
+(async function () {
+  const targetWidth = 350;
+  const base64Path = "images/signature/big-sig.b64";
+  const base64Buffer = await getBase64BufferFromFile(base64Path);
+
+  // Step 1: Process Jimp image
+  const jimpImage = await getJimpImage(base64Buffer);
+
+  console.error("ESC/POS data size - BEFORE resize: ");
+  console.error(`${(base64Buffer.length / 1024).toFixed(2)} kbytes`);
+  console.error(`w x h: ${jimpImage.bitmap.width}x${jimpImage.bitmap.height}`);
+  console.error("\n");
+
+  // Step 3: Process the image (resize it if needed)
+  const image = await processImage(jimpImage, targetWidth); // Set the targetWidth to fit or leave as 0
+
+  // Step 2: Convert Jimp image to ESC/POS data
+  const escPosImageData = convertForESCPOSFunction(image);
+
+  // Step 3: Generate ESC/POS commands
+  const escPosCommands = getImageESCPosCommands(
+    escPosImageData,
+    jimpImage.bitmap.width,
+    jimpImage.bitmap.height
+  );
+
+  // Step 4: Add line breaks and cut commands
+  const lineBreaks = addLineBreaks(2);
+  const cutCommand = addCutCommand();
+
+  // Step 5: Combine everything and send it to the printer
+  const finalPrintData = Buffer.concat([
+    escPosCommands,
+    lineBreaks,
+    cutCommand,
+  ]);
+
+  console.error("ESC/POS data size - AFTER  resize: ");
+  console.error(`${(finalPrintData.length / 1024).toFixed(2)} kbytes`);
+  console.error(`w x h: ${image.bitmap.width}x${image.bitmap.height}`);
+  console.error("\n");
+
+  process.stdout.write(finalPrintData);
+})();
