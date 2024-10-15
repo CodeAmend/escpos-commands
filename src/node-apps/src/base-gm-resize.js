@@ -3,10 +3,10 @@ const {
   convertForESCPOSFunction,
   getImageESCPosCommands,
   getBase64BufferFromFile,
-  saveFile,
   addLineBreaks,
   addCutCommand,
   logImageStats,
+  saveFile,
 } = require("./shared-functions");
 
 // Function: Load GM Image

@@ -90,28 +90,19 @@ function getImageESCPosCommands(imageBytes, width, height) {
 }
 
 function convertForESCPOSFunction(imageData, width, height, channels = 4) {
-  const widthBytes = Math.ceil(width / 8); // Calculate width in bytes for ESC/POS
+  const widthBytes = Math.ceil(width / 8);
   let escPosData = [];
-
   for (let y = 0; y < height; y++) {
     let rowBytes = [];
     for (let x = 0; x < width; x += 8) {
       let byte = 0;
       for (let bit = 0; bit < 8; bit++) {
         if (x + bit < width) {
-          const pixelIndex = (y * width + x + bit) * channels; // Multiply by channels to get the correct index
-
-          const r = imageData[pixelIndex];
-          const g = imageData[pixelIndex + 1];
-          const b = imageData[pixelIndex + 2];
-          const alpha = channels === 4 ? imageData[pixelIndex + 3] : 255; // Use alpha if 4-channel
-
-          // Calculate grayscale using RGB values
-          const grayscale = 0.3 * r + 0.59 * g + 0.11 * b;
-
-          // Check if the pixel is dark (grayscale <= 128) and the alpha channel is not fully transparent
-          if (grayscale <= 128 && alpha > 128) {
-            byte |= 1 << (7 - bit); // Set bit for dark pixels
+          const pixelIndex = (y * width + x + bit) * channels;
+          // Use only the first channel (assumed to be grayscale)
+          const pixelValue = imageData[pixelIndex];
+          if (pixelValue <= 128) {
+            byte |= 1 << (7 - bit);
           }
         }
       }
@@ -119,13 +110,8 @@ function convertForESCPOSFunction(imageData, width, height, channels = 4) {
     }
     escPosData.push(Buffer.from(rowBytes));
   }
-
   return Buffer.concat(escPosData);
 }
-
-module.exports = {
-  convertForESCPOSFunction,
-};
 
 const colors = {
   reset: "\x1b[0m",

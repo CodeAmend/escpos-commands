@@ -1,12 +1,13 @@
 const sharp = require("sharp");
 const bmp = require("bmp-js");
 const {
+  getImageESCPosCommands,
+  convertForESCPOSFunction,
   getBase64BufferFromFile,
-  saveFile,
   addLineBreaks,
   addCutCommand,
   logImageStats,
-  getImageESCPosCommands,
+  //saveFile,
 } = require("./shared-functions");
 
 function decodeBMPToSharp(bmpBuffer) {
@@ -38,30 +39,6 @@ async function processImage(sharpImage, resizeWidth) {
   return sharpImage.threshold(128).raw().toBuffer({ resolveWithObject: true });
 }
 
-// Function: Convert Sharp image to ESC/POS binary data
-function convertForESCPOSFunction(imageData, info) {
-  const widthBytes = Math.ceil(info.width / 8);
-  let escPosData = [];
-
-  for (let y = 0; y < info.height; y++) {
-    let rowBytes = [];
-    for (let x = 0; x < info.width; x += 8) {
-      let byte = 0;
-      for (let bit = 0; bit < 8; bit++) {
-        if (x + bit < info.width) {
-          const pixelIndex = (y * info.width + x + bit) * info.channels;
-          const pixelValue = imageData[pixelIndex];
-          if (pixelValue <= 128) byte |= 1 << (7 - bit);
-        }
-      }
-      rowBytes.push(byte);
-    }
-    escPosData.push(Buffer.from(rowBytes));
-  }
-
-  return Buffer.concat(escPosData);
-}
-
 // Main function
 (async function () {
   const targetWidth = 400;
@@ -82,8 +59,13 @@ function convertForESCPOSFunction(imageData, info) {
   // Process the image (resize it if needed)
   const { data: imageData, info } = await processImage(sharpImage, targetWidth);
 
-  // Convert Sharp image to ESC/POS data
-  const escPosImageData = convertForESCPOSFunction(imageData, info);
+  // Use the shared function for the actual conversion
+  const escPosImageData = convertForESCPOSFunction(
+    imageData,
+    info.width,
+    info.height,
+    info.channels
+  );
 
   // Generate ESC/POS commands
   const escPosCommands = getImageESCPosCommands(
