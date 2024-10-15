@@ -27,11 +27,19 @@ async function processGMImage(buffer, resizeWidth) {
   return new Promise((resolve, reject) => {
     gm(buffer)
       .resize(resizeWidth, null)
+      .contrast(+1)
+      .negative()
+      .threshold(80)
       .toBuffer("PNG", (err, processedBuffer) => {
         if (err) {
           console.error("Error processing image with gm:", err);
           return reject(err);
         }
+        console.error(
+          "Debug: Processed image buffer length:",
+          processedBuffer.length
+        );
+
         resolve(processedBuffer);
       });
   });
@@ -59,6 +67,7 @@ async function identifyGMImage(gmImageBuffer) {
   try {
     // Step 1: Load the GM image
     const gmImageBuffer = await loadGMImage(base64Buffer);
+    saveFile("output/debug_gm_1_loaded.png", gmImageBuffer);
 
     // Step 2: Identify original image dimensions
     const originalImageInfo = await identifyGMImage(gmImageBuffer);
@@ -77,6 +86,18 @@ async function identifyGMImage(gmImageBuffer) {
       gmImageBuffer,
       targetWidth
     );
+    saveFile("output/debug_gm_2_processed.png", processedImageBuffer);
+
+    const gmDebugInfo = await new Promise((resolve, reject) => {
+      gm(processedImageBuffer).identify((err, value) => {
+        if (err) reject(err);
+        else resolve(value);
+      });
+    });
+    console.error(
+      "Debug: GM processed image info:",
+      JSON.stringify(gmDebugInfo)
+    );
 
     //saveFile("output/resized-signature.png", processedImageBuffer); // Save resized PNG for inspection
 
@@ -89,6 +110,7 @@ async function identifyGMImage(gmImageBuffer) {
       width,
       height
     );
+    saveFile("output/debug_gm_3_escpos.bin", escPosImageData);
 
     const escPosCommands = getImageESCPosCommands(
       escPosImageData,
