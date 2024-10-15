@@ -19,6 +19,7 @@ async function processImage(jimpImage, resizeWidth) {
 
   return jimpImage; // Return the Jimp image object
 }
+
 // Function: Convert Jimp to ESC/POS binary data
 function convertForESCPOSFunction(image) {
   const width = image.bitmap.width;
@@ -73,42 +74,48 @@ function getImageESCPosCommands(imageBytes, width, height) {
   const base64Path = "images/signature/big-sig.b64";
   const base64Buffer = await getBase64BufferFromFile(base64Path);
 
-  // Step 1: Process Jimp image
+  // Step 1: Load the Jimp image
   const jimpImage = await getJimpImage(base64Buffer);
 
-  console.error("ESC/POS data size - BEFORE resize: ");
-  console.error(`${(base64Buffer.length / 1024).toFixed(2)} kbytes`);
-  console.error(`w x h: ${jimpImage.bitmap.width}x${jimpImage.bitmap.height}`);
-  console.error("\n");
+  console.error("BEFORE resize:");
+  console.error(`W x H: ${jimpImage.bitmap.width}x${jimpImage.bitmap.height}`);
+  console.error(`Bytes: ${(base64Buffer.length / 1024).toFixed(2)}kb\n\n`);
 
-  // Step 3: Process the image (resize it if needed)
+  // Step 2: Process the image (resize it if needed)
   const image = await processImage(jimpImage, targetWidth); // Set the targetWidth to fit or leave as 0
 
-  // Step 2: Convert Jimp image to ESC/POS data
+  // Step 3: Convert Jimp image to ESC/POS data
   const escPosImageData = convertForESCPOSFunction(image);
 
-  // Step 3: Generate ESC/POS commands
+  // Step 4: Generate ESC/POS commands
   const escPosCommands = getImageESCPosCommands(
     escPosImageData,
-    jimpImage.bitmap.width,
-    jimpImage.bitmap.height
+    image.bitmap.width,
+    image.bitmap.height
   );
 
-  // Step 4: Add line breaks and cut commands
+  // Step 5: Add line breaks and cut commands
   const lineBreaks = addLineBreaks(2);
   const cutCommand = addCutCommand();
 
-  // Step 5: Combine everything and send it to the printer
+  // Step 6: Combine everything and send it to the printer
   const finalPrintData = Buffer.concat([
     escPosCommands,
     lineBreaks,
     cutCommand,
   ]);
 
-  console.error("ESC/POS data size - AFTER  resize: ");
-  console.error(`${(finalPrintData.length / 1024).toFixed(2)} kbytes`);
-  console.error(`w x h: ${image.bitmap.width}x${image.bitmap.height}`);
-  console.error("\n");
+  console.error("AFTER resize:");
+  console.error(`W x H: ${image.bitmap.width}x${image.bitmap.height}`);
+  console.error(`Bytes: ${(finalPrintData.length / 1024).toFixed(2)}kb\n`);
+  console.error("Time to print 9600 baud:");
+  // Calculate time to print over 9600 baud
+  const totalBits = finalPrintData.length * 10; // 10 bits per byte (8 data bits + 1 start bit + 1 stop bit)
+  const baudRate = 9600;
+  const timeToPrintInSeconds = totalBits / baudRate;
 
-  process.stdout.write(finalPrintData);
+  console.error("Time to print at 9600 baud:");
+  console.error(`${timeToPrintInSeconds.toFixed(2)} seconds`);
+
+  process.stdout.write(finalPrintData); // Send to printer
 })();
