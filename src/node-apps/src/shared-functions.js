@@ -65,6 +65,38 @@ function addCutCommand() {
   return Buffer.from([0x1d, 0x56, 0x42, 0x00]); // Partial cut command
 }
 
+const colors = {
+  reset: "\x1b[0m",
+  cyan: "\x1b[36m",
+  yellow: "\x1b[33m",
+  magenta: "\x1b[35m",
+};
+
+// Logger function with stage (before/after)
+function logImageStats(stage, width, height, dataLength, baudRate) {
+  console.log("");
+  console.error(`${colors.cyan}${stage}${colors.reset} resize:`);
+  console.error(
+    `Dimensions: ${colors.yellow}${width}x${height}${colors.reset}`
+  );
+  console.error(
+    `Bytes: ${colors.magenta}${(dataLength / 1024).toFixed(2)}kb${
+      colors.reset
+    }\n`
+  );
+
+  // Calculate time to print over the given baud rate
+  const totalBits = dataLength * 10; // 10 bits per byte (8 data bits + 1 start bit + 1 stop bit)
+  const timeToPrintInSeconds = totalBits / baudRate;
+
+  console.error(
+    `Time to print at ${baudRate} baud: ${
+      colors.magenta
+    }${timeToPrintInSeconds.toFixed(2)} seconds${colors.reset}`
+  );
+  console.log();
+}
+
 // Export shared functions
 module.exports = {
   getBase64BufferFromFile,
@@ -73,4 +105,5 @@ module.exports = {
   resizeSVG,
   addLineBreaks,
   addCutCommand,
+  logImageStats,
 };

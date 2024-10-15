@@ -4,6 +4,7 @@ const {
   saveFile,
   addLineBreaks,
   addCutCommand,
+  logImageStats,
 } = require("./shared-functions");
 
 // Function: Get Jimp Image
@@ -77,9 +78,13 @@ function getImageESCPosCommands(imageBytes, width, height) {
   // Step 1: Load the Jimp image
   const jimpImage = await getJimpImage(base64Buffer);
 
-  console.error("BEFORE resize:");
-  console.error(`W x H: ${jimpImage.bitmap.width}x${jimpImage.bitmap.height}`);
-  console.error(`Bytes: ${(base64Buffer.length / 1024).toFixed(2)}kb\n\n`);
+  logImageStats(
+    "BEFORE",
+    jimpImage.bitmap.width,
+    jimpImage.bitmap.height,
+    base64Buffer.length,
+    9600
+  );
 
   // Step 2: Process the image (resize it if needed)
   const image = await processImage(jimpImage, targetWidth); // Set the targetWidth to fit or leave as 0
@@ -105,17 +110,13 @@ function getImageESCPosCommands(imageBytes, width, height) {
     cutCommand,
   ]);
 
-  console.error("AFTER resize:");
-  console.error(`W x H: ${image.bitmap.width}x${image.bitmap.height}`);
-  console.error(`Bytes: ${(finalPrintData.length / 1024).toFixed(2)}kb\n`);
-  console.error("Time to print 9600 baud:");
-  // Calculate time to print over 9600 baud
-  const totalBits = finalPrintData.length * 10; // 10 bits per byte (8 data bits + 1 start bit + 1 stop bit)
-  const baudRate = 9600;
-  const timeToPrintInSeconds = totalBits / baudRate;
-
-  console.error("Time to print at 9600 baud:");
-  console.error(`${timeToPrintInSeconds.toFixed(2)} seconds`);
+  logImageStats(
+    "BEFORE",
+    image.bitmap.width,
+    image.bitmap.height,
+    finalPrintData.length,
+    9600
+  );
 
   process.stdout.write(finalPrintData); // Send to printer
 })();
