@@ -1,12 +1,14 @@
 const sharp = require("sharp");
 const potrace = require("potrace");
 const {
+  getImageESCPosCommands,
   getBase64BufferFromFile,
   decodeBMP,
-  saveFile,
+  //saveFile,
   resizeSVG,
   addLineBreaks,
   addCutCommand,
+  logImageStats,
 } = require("./shared-functions");
 
 // Function: Convert BMP to PNG using sharp
@@ -72,19 +74,7 @@ async function convertPNGToEscPos(pngBuffer) {
     escPosData.push(Buffer.from(rowBytes));
   }
 
-  const density = 0x00; // Single density mode
-  const escPosHeader = Buffer.from([
-    0x1d,
-    0x76,
-    0x30,
-    density,
-    widthBytes % 256,
-    Math.floor(widthBytes / 256),
-    info.height % 256,
-    Math.floor(info.height / 256),
-  ]);
-
-  return Buffer.concat([escPosHeader, ...escPosData]);
+  return Buffer.concat(escPosData);
 }
 
 // Main Sharp processing
@@ -92,27 +82,55 @@ async function convertPNGToEscPos(pngBuffer) {
   const base64Path = "images/signature/big-sig.b64";
   const base64Buffer = await getBase64BufferFromFile(base64Path);
 
+  // Decode BMP and convert to PNG
   const bmpData = decodeBMP(base64Buffer);
   const pngBuffer = await convertBMPToPNG(bmpData);
-  saveFile("output/preprocessed-signature.png", pngBuffer);
 
+  logImageStats(
+    "BEFORE",
+    bmpData.width,
+    bmpData.height,
+    pngBuffer.length,
+    9600
+  );
+
+  // Convert PNG to SVG
   const svgData = await convertPNGToSVG(pngBuffer);
-  saveFile("output/signature-output.svg", svgData);
 
+  // Resize the SVG
   const resizedSVG = resizeSVG(svgData, 200);
-  saveFile("output/resized-signature.svg", resizedSVG);
 
+  // Convert the resized SVG back to PNG for ESC/POS conversion
   const resizedPNGBuffer = await sharp(Buffer.from(resizedSVG))
     .png()
     .toBuffer();
-  saveFile("output/resized-final.png", resizedPNGBuffer);
 
+  // Extract dimensions of the resized PNG using sharp
+  const resizedPNGInfo = await sharp(resizedPNGBuffer).metadata();
+
+  // saveFile("output/resized-final.png", resizedPNGBuffer);
+
+  // Convert resized PNG to ESC/POS data
   const escPosData = await convertPNGToEscPos(resizedPNGBuffer);
 
-  // Add line breaks and cut commands
+  // Generate ESC/POS commands
+  const escPosCommands = getImageESCPosCommands(escPosData, 200, 200);
+
   const lineBreaks = addLineBreaks(2);
   const cutCommand = addCutCommand();
-  const finalPrintData = Buffer.concat([escPosData, lineBreaks, cutCommand]);
+  const finalPrintData = Buffer.concat([
+    escPosCommands,
+    lineBreaks,
+    cutCommand,
+  ]);
+
+  logImageStats(
+    "AFTER",
+    resizedPNGInfo.width,
+    resizedPNGInfo.height,
+    finalPrintData.length,
+    9600
+  );
 
   // Output the ESC/POS data for printing
   process.stdout.write(finalPrintData);

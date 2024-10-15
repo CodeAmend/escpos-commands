@@ -1,5 +1,6 @@
 const gm = require("gm").subClass({ imageMagick: true });
 const {
+  getImageESCPosCommands,
   getBase64BufferFromFile,
   saveFile,
   addLineBreaks,
@@ -79,24 +80,6 @@ function convertForESCPOSFunction(imageData, width, height) {
 }
 
 // Function: Generate ESC/POS commands for printing the image
-function getImageESCPosCommands(imageBytes, width, height) {
-  const density = 0x00;
-  const widthBytes = Math.ceil(width / 8);
-
-  const escPosHeader = Buffer.from([
-    0x1d,
-    0x76,
-    0x30,
-    density,
-    widthBytes % 256,
-    Math.floor(widthBytes / 256),
-    height % 256,
-    Math.floor(height / 256),
-  ]);
-
-  return Buffer.concat([escPosHeader, imageBytes]);
-}
-
 (async function () {
   const targetWidth = 350;
   const base64Path = "images/signature/big-sig.b64";
@@ -162,93 +145,10 @@ function getImageESCPosCommands(imageBytes, width, height) {
     );
 
     //fs.writeFileSync("output/final-print-data.bin", finalPrintData);
-    console.error("Final ESC/POS data saved to 'output/final-print-data.bin'");
+    //console.error("Final ESC/POS data saved to 'output/final-print-data.bin'");
 
     process.stdout.write(finalPrintData); // Send to printer
   } catch (err) {
     console.error("Error in image processing:", err);
   }
 })();
-
-//// Main function
-//(async function () {
-//  const targetWidth = 800;
-//  const base64Path = "images/signature/big-sig.b64";
-//  const base64Buffer = await getBase64BufferFromFile(base64Path);
-//
-//  console.error("Base64 data size - BEFORE processing: ");
-//  console.error(`${(base64Buffer.length / 1024).toFixed(2)} kbytes`);
-//
-//  try {
-//    // Step 1: Load the GM image
-//    const gmImageBuffer = await loadGMImage(base64Buffer);
-//
-//    // Step 2: Process (resize) the image
-//    const processedImageBuffer = await processGMImage(
-//      gmImageBuffer,
-//      targetWidth
-//    );
-//    saveFile("output/resized-signature.png", processedImageBuffer); // Save resized PNG for inspection
-//
-//    // Step 3: Identify the resized image dimensions
-//    const imageInfo = await identifyGMImage(processedImageBuffer);
-//    const width = imageInfo.size.width;
-//    const height = imageInfo.size.height;
-//    const channels = imageInfo.depth === 8 ? 3 : 4;
-//
-//    console.error(`Resized image dimensions: ${width}x${height}`);
-//    console.error(
-//      `Resized image buffer size: ${(
-//        processedImageBuffer.length / 1024
-//      ).toFixed(2)} kbytes`
-//    );
-//    console.error(
-//      "Final image size (w * h * channels): ",
-//      ((width * height * channels) / 1024).toFixed(2),
-//      "kbytes"
-//    );
-//
-//    // Step 4: Convert the resized image to ESC/POS binary data
-//    const escPosImageData = convertForESCPOSFunction(
-//      processedImageBuffer,
-//      width,
-//      height
-//    );
-//
-//    console.error(
-//      `Length of resized image data for ESC/POS: ${(
-//        escPosImageData.length / 1024
-//      ).toFixed(2)} kbytes`
-//    );
-//
-//    // Step 5: Generate ESC/POS commands
-//    const escPosCommands = getImageESCPosCommands(
-//      escPosImageData,
-//      width,
-//      height
-//    );
-//
-//    // Step 6: Add line breaks and cut commands
-//    const lineBreaks = addLineBreaks(2);
-//    const cutCommand = addCutCommand();
-//
-//    // Step 7: Combine everything
-//    const finalPrintData = Buffer.concat([
-//      escPosCommands,
-//      lineBreaks,
-//      cutCommand,
-//    ]);
-//
-//    console.error("Final ESC/POS data size: ");
-//    console.error(`${(finalPrintData.length / 1024).toFixed(2)} kbytes`);
-//
-//    // Step 8: Save the final data (optional) and send to the printer
-//    const fs = require("fs");
-//    fs.writeFileSync("output/final-print-data.bin", finalPrintData);
-//    console.error("Final ESC/POS data saved to 'output/final-print-data.bin'");
-//
-//    process.stdout.write(finalPrintData); // Send to printer
-//  } catch (err) {
-//    console.error("Error in image processing:", err);
-//  }
-//})();
