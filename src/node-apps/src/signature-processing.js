@@ -5,8 +5,9 @@ const {
   logImageStats,
   saveFile,
   createRasterBitImageCommands,
-  getImageESCPosCommands,
-} = require("./shared-functions"); // Assuming the shared functions are in this file
+  addLineBreaks,
+  addCutCommand,
+} = require("./shared-functions");
 
 async function loadAndDecodeBMP(base64Path) {
   const base64Buffer = await getBase64BufferFromFile(base64Path);
@@ -45,52 +46,6 @@ async function processImageWithSharp(bmpData, targetWidth) {
   return { processedImageBuffer, info };
 }
 
-function createESCPOSCommands(imageBuffer, width, height) {
-  const commands = [];
-  const bytesPerLine = Math.ceil(width / 8);
-
-  // ESC @ - Initialize printer
-  commands.push(Buffer.from([0x1b, 0x40]));
-
-  // GS v 0 - Set raster bit image mode
-  commands.push(Buffer.from([0x1d, 0x76, 0x30, 0x00]));
-
-  // Set image dimensions
-  commands.push(
-    Buffer.from([
-      bytesPerLine & 0xff,
-      (bytesPerLine >> 8) & 0xff,
-      height & 0xff,
-      (height >> 8) & 0xff,
-    ])
-  );
-
-  // Process image data
-  for (let y = 0; y < height; y++) {
-    const lineBuffer = Buffer.alloc(bytesPerLine);
-    for (let x = 0; x < width; x++) {
-      const pixelIndex = y * width + x;
-      if (imageBuffer[pixelIndex] === 0) {
-        // Black pixel
-        const byteIndex = Math.floor(x / 8);
-        const bitIndex = 7 - (x % 8);
-        lineBuffer[byteIndex] |= 1 << bitIndex;
-      }
-    }
-    commands.push(lineBuffer);
-  }
-
-  return Buffer.concat(commands);
-}
-
-function addLineBreaks(count) {
-  return Buffer.from(Array(count).fill(0x0a));
-}
-
-function addCutCommand() {
-  return Buffer.from([0x1d, 0x56, 0x41, 0x00]); // Full cut
-}
-
 async function main() {
   const targetWidth = 400;
   const base64Path = "images/signature/big-sig.b64";
@@ -111,23 +66,11 @@ async function main() {
       targetWidth
     );
 
-    const imageDataForEscPos = getImageESCPosCommands(
+    const escPosCommands = createRasterBitImageCommands(
       processedImageBuffer,
       info.width,
       info.height
     );
-
-    const escPosCommands = createRasterBitImageCommands(
-      imageDataForEscPos,
-      info.width,
-      info.height
-    );
-
-    //const escPosCommands = createESCPOSCommands(
-    //  processedImageBuffer,
-    //  info.width,
-    //  info.height
-    //);
 
     saveFile("output/debug_escpos_commands.bin", escPosCommands);
 
