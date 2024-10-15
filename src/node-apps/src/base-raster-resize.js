@@ -19,6 +19,8 @@ async function processImage(jimpImage, resizeWidth) {
     jimpImage.resize(resizeWidth, Jimp.AUTO, Jimp.RESIZE_NEAREST_NEIGHBOR);
   }
 
+  jimpImage.grayscale().contrast(1);
+
   return jimpImage;
 }
 
@@ -39,13 +41,14 @@ async function processImage(jimpImage, resizeWidth) {
     9600
   );
 
-  // Process the image (resize it if needed)
+  const processedImage = await processImage(jimpImage, targetWidth);
   const {
     bitmap: { data: bData, width: bWidth, height: bHeight },
-  } = await processImage(jimpImage, targetWidth); // Set the targetWidth to fit or leave as 0
+  } = processedImage;
+  console.error("Debug: Processed image dimensions:", bWidth, "x", bHeight);
 
   // Convert Jimp image to ESC/POS data
-  const escPosImageData = convertForESCPOSFunction(bData, bWidth, bHeight);
+  const escPosImageData = convertForESCPOSFunction(bData, bWidth, bHeight, 4);
 
   // Generate ESC/POS commands
   const escPosCommands = getImageESCPosCommands(

@@ -63,8 +63,11 @@ function convertPNGToSVG(pngBuffer) {
     .png()
     .toBuffer();
 
+  console.error("Debug: Resized PNG buffer length:", resizedPNGBuffer.length);
+
   // Extract dimensions and data of the resized PNG using sharp
   const { data, info } = await sharp(resizedPNGBuffer)
+    .greyscale()
     .raw()
     .toBuffer({ resolveWithObject: true });
 

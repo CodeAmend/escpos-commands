@@ -90,8 +90,15 @@ function getImageESCPosCommands(imageBytes, width, height) {
 }
 
 function convertForESCPOSFunction(imageData, width, height, channels = 4) {
+  console.error(
+    `Debug: Image dimensions: ${width}x${height}, Channels: ${channels}`
+  );
+
   const widthBytes = Math.ceil(width / 8);
   let escPosData = [];
+  let blackPixelCount = 0;
+  let whitePixelCount = 0;
+
   for (let y = 0; y < height; y++) {
     let rowBytes = [];
     for (let x = 0; x < width; x += 8) {
@@ -99,10 +106,30 @@ function convertForESCPOSFunction(imageData, width, height, channels = 4) {
       for (let bit = 0; bit < 8; bit++) {
         if (x + bit < width) {
           const pixelIndex = (y * width + x + bit) * channels;
-          // Use only the first channel (assumed to be grayscale)
-          const pixelValue = imageData[pixelIndex];
+          let pixelValue;
+
+          if (channels === 1) {
+            pixelValue = imageData[pixelIndex];
+          } else {
+            const r = imageData[pixelIndex];
+            const g = imageData[pixelIndex + 1];
+            const b = imageData[pixelIndex + 2];
+            const alpha = channels === 4 ? imageData[pixelIndex + 3] : 255;
+
+            // Calculate grayscale value
+            pixelValue = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+
+            // If pixel is transparent, treat it as white
+            if (alpha < 128) {
+              pixelValue = 255;
+            }
+          }
+
           if (pixelValue <= 128) {
             byte |= 1 << (7 - bit);
+            blackPixelCount++;
+          } else {
+            whitePixelCount++;
           }
         }
       }
@@ -110,6 +137,10 @@ function convertForESCPOSFunction(imageData, width, height, channels = 4) {
     }
     escPosData.push(Buffer.from(rowBytes));
   }
+
+  console.error(
+    `Debug: Black pixels: ${blackPixelCount}, White pixels: ${whitePixelCount}`
+  );
   return Buffer.concat(escPosData);
 }
 

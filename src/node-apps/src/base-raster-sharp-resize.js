@@ -36,7 +36,11 @@ async function processImage(sharpImage, resizeWidth) {
   }
 
   // Convert to grayscale and return raw format for ESC/POS conversion
-  return sharpImage.threshold(128).raw().toBuffer({ resolveWithObject: true });
+  return sharpImage
+    .grayscale()
+    .threshold(128)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
 }
 
 // Main function
@@ -58,6 +62,7 @@ async function processImage(sharpImage, resizeWidth) {
 
   // Process the image (resize it if needed)
   const { data: imageData, info } = await processImage(sharpImage, targetWidth);
+  console.error("Debug: Processed image info:", JSON.stringify(info));
 
   // Use the shared function for the actual conversion
   const escPosImageData = convertForESCPOSFunction(
