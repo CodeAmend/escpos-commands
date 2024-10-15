@@ -1,11 +1,12 @@
 const Jimp = require("jimp");
 const {
+  convertForESCPOSFunction,
   getImageESCPosCommands,
   getBase64BufferFromFile,
-  saveFile,
   addLineBreaks,
   addCutCommand,
   logImageStats,
+  //saveFile,
 } = require("./shared-functions");
 
 // Function: Get Jimp Image
@@ -19,33 +20,6 @@ async function processImage(jimpImage, resizeWidth) {
   }
 
   return jimpImage;
-}
-
-// Function: Convert Jimp to ESC/POS binary data
-function convertForESCPOSFunction(image) {
-  const width = image.bitmap.width;
-  const height = image.bitmap.height;
-  const widthBytes = Math.ceil(width / 8);
-
-  let imageData = [];
-  for (let y = 0; y < height; y++) {
-    let rowBytes = [];
-    for (let x = 0; x < width; x += 8) {
-      let byte = 0;
-      for (let bit = 0; bit < 8; bit++) {
-        if (x + bit < width) {
-          const color = image.getPixelColor(x + bit, y);
-          const { r, g, b } = Jimp.intToRGBA(color);
-          const grayscale = 0.3 * r + 0.59 * g + 0.11 * b;
-          if (grayscale <= 128) byte |= 1 << (7 - bit);
-        }
-      }
-      rowBytes.push(byte);
-    }
-    imageData.push(Buffer.from(rowBytes));
-  }
-
-  return Buffer.concat(imageData);
 }
 
 // Main function
@@ -66,16 +40,18 @@ function convertForESCPOSFunction(image) {
   );
 
   // Process the image (resize it if needed)
-  const image = await processImage(jimpImage, targetWidth); // Set the targetWidth to fit or leave as 0
+  const {
+    bitmap: { data: bData, width: bWidth, height: bHeight },
+  } = await processImage(jimpImage, targetWidth); // Set the targetWidth to fit or leave as 0
 
   // Convert Jimp image to ESC/POS data
-  const escPosImageData = convertForESCPOSFunction(image);
+  const escPosImageData = convertForESCPOSFunction(bData, bWidth, bHeight);
 
   // Generate ESC/POS commands
   const escPosCommands = getImageESCPosCommands(
     escPosImageData,
-    image.bitmap.width,
-    image.bitmap.height
+    bWidth,
+    bHeight
   );
 
   // Add line breaks and cut commands
@@ -89,13 +65,7 @@ function convertForESCPOSFunction(image) {
     cutCommand,
   ]);
 
-  logImageStats(
-    "BEFORE",
-    image.bitmap.width,
-    image.bitmap.height,
-    finalPrintData.length,
-    9600
-  );
+  logImageStats("BEFORE", bWidth, bHeight, finalPrintData.length, 9600);
 
   process.stdout.write(finalPrintData); // Send to printer
 })();

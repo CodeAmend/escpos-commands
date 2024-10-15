@@ -89,6 +89,44 @@ function getImageESCPosCommands(imageBytes, width, height) {
   return Buffer.concat([setDoubleSizeCommand, escPosHeader, imageBytes]);
 }
 
+function convertForESCPOSFunction(imageData, width, height, channels = 4) {
+  const widthBytes = Math.ceil(width / 8); // Calculate width in bytes for ESC/POS
+  let escPosData = [];
+
+  for (let y = 0; y < height; y++) {
+    let rowBytes = [];
+    for (let x = 0; x < width; x += 8) {
+      let byte = 0;
+      for (let bit = 0; bit < 8; bit++) {
+        if (x + bit < width) {
+          const pixelIndex = (y * width + x + bit) * channels; // Multiply by channels to get the correct index
+
+          const r = imageData[pixelIndex];
+          const g = imageData[pixelIndex + 1];
+          const b = imageData[pixelIndex + 2];
+          const alpha = channels === 4 ? imageData[pixelIndex + 3] : 255; // Use alpha if 4-channel
+
+          // Calculate grayscale using RGB values
+          const grayscale = 0.3 * r + 0.59 * g + 0.11 * b;
+
+          // Check if the pixel is dark (grayscale <= 128) and the alpha channel is not fully transparent
+          if (grayscale <= 128 && alpha > 128) {
+            byte |= 1 << (7 - bit); // Set bit for dark pixels
+          }
+        }
+      }
+      rowBytes.push(byte);
+    }
+    escPosData.push(Buffer.from(rowBytes));
+  }
+
+  return Buffer.concat(escPosData);
+}
+
+module.exports = {
+  convertForESCPOSFunction,
+};
+
 const colors = {
   reset: "\x1b[0m",
   cyan: "\x1b[36m",
@@ -98,7 +136,7 @@ const colors = {
 
 // Logger function with stage (before/after)
 function logImageStats(stage, width, height, dataLength, baudRate) {
-  console.log("");
+  console.error("");
   console.error(`${colors.cyan}${stage}${colors.reset} resize:`);
   console.error(
     `Dimensions: ${colors.yellow}${width}x${height}${colors.reset}`
@@ -118,11 +156,12 @@ function logImageStats(stage, width, height, dataLength, baudRate) {
       colors.magenta
     }${timeToPrintInSeconds.toFixed(2)} seconds${colors.reset}`
   );
-  console.log();
+  console.error();
 }
 
 // Export shared functions
 module.exports = {
+  convertForESCPOSFunction,
   getImageESCPosCommands,
   getBase64BufferFromFile,
   decodeBMP,
