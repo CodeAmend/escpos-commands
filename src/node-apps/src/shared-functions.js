@@ -65,6 +65,30 @@ function addCutCommand() {
   return Buffer.from([0x1d, 0x56, 0x42, 0x00]); // Partial cut command
 }
 
+// Function: Generate ESC/POS commands for printing the image
+function getImageESCPosCommands(imageBytes, width, height) {
+  const density = 0x00; // Single density mode
+  const widthBytes = Math.ceil(width / 8); // Width in bytes (1 byte = 8 pixels)
+
+  // ESC/POS command to set double-width and double-height mode
+  const setDoubleSizeCommand = Buffer.from([0x1d, 0x21, 0x30]); // GS ! n (n=0x30 means double-width and double-height)
+
+  // ESC/POS header for raster graphics printing
+  const escPosHeader = Buffer.from([
+    0x1d,
+    0x76,
+    0x30,
+    density, // Density for single-density raster graphics
+    widthBytes % 256, // Width low byte
+    Math.floor(widthBytes / 256), // Width high byte
+    height % 256, // Height low byte
+    Math.floor(height / 256), // Height high byte
+  ]);
+
+  // Combine the commands: Set double-size mode, print image, then reset the size
+  return Buffer.concat([setDoubleSizeCommand, escPosHeader, imageBytes]);
+}
+
 const colors = {
   reset: "\x1b[0m",
   cyan: "\x1b[36m",
@@ -99,6 +123,7 @@ function logImageStats(stage, width, height, dataLength, baudRate) {
 
 // Export shared functions
 module.exports = {
+  getImageESCPosCommands,
   getBase64BufferFromFile,
   decodeBMP,
   saveFile,
