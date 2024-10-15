@@ -66,6 +66,7 @@ function addCutCommand() {
 }
 
 // Function: Generate ESC/POS commands for printing the image
+// Uses the ESC * command (1B 2A)
 function getImageESCPosCommands(imageBytes, width, height) {
   const density = 0x00; // Single density mode
   const widthBytes = Math.ceil(width / 8); // Width in bytes (1 byte = 8 pixels)
@@ -89,12 +90,50 @@ function getImageESCPosCommands(imageBytes, width, height) {
   return Buffer.concat([setDoubleSizeCommand, escPosHeader, imageBytes]);
 }
 
-function convertForESCPOSFunction(imageData, width, height, channels = 4) {
+// Uses the GS v 0 command (1D 76 30 00)
+function createRasterBitImageCommands(imageBuffer, width, height) {
+  const commands = [];
+  const bytesPerLine = Math.ceil(width / 8);
+
+  // ESC @ - Initialize printer
+  commands.push(Buffer.from([0x1b, 0x40]));
+
+  // GS v 0 - Set raster bit image mode
+  commands.push(Buffer.from([0x1d, 0x76, 0x30, 0x00]));
+
+  // Set image dimensions (little-endian)
+  commands.push(
+    Buffer.from([
+      bytesPerLine & 0xff,
+      (bytesPerLine >> 8) & 0xff,
+      height & 0xff,
+      (height >> 8) & 0xff,
+    ])
+  );
+
+  // Process image data
+  for (let y = 0; y < height; y++) {
+    const lineBuffer = Buffer.alloc(bytesPerLine);
+    for (let x = 0; x < width; x++) {
+      const pixelIndex = y * width + x;
+      if (imageBuffer[pixelIndex] === 0) {
+        // Black pixel
+        const byteIndex = Math.floor(x / 8);
+        const bitIndex = 7 - (x % 8);
+        lineBuffer[byteIndex] |= 1 << bitIndex;
+      }
+    }
+    commands.push(lineBuffer);
+  }
+
+  return Buffer.concat(commands);
+}
+
+function createGraphicsModeCommands(imageData, width, height, channels = 4) {
   console.error(
     `Debug: Image dimensions: ${width}x${height}, Channels: ${channels}`
   );
 
-  const widthBytes = Math.ceil(width / 8);
   let escPosData = [];
   let blackPixelCount = 0;
   let whitePixelCount = 0;
@@ -178,7 +217,8 @@ function logImageStats(stage, width, height, dataLength, baudRate) {
 
 // Export shared functions
 module.exports = {
-  convertForESCPOSFunction,
+  createGraphicsModeCommands,
+  createRasterBitImageCommands,
   getImageESCPosCommands,
   getBase64BufferFromFile,
   decodeBMP,
