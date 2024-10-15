@@ -1,5 +1,6 @@
 const gm = require("gm").subClass({ imageMagick: true });
 const {
+  convertForESCPOSFunction,
   getImageESCPosCommands,
   getBase64BufferFromFile,
   saveFile,
@@ -47,36 +48,6 @@ async function identifyGMImage(gmImageBuffer) {
       resolve(imageInfo);
     });
   });
-}
-
-// Function: Convert PNG to ESC/POS binary data
-function convertForESCPOSFunction(imageData, width, height) {
-  const widthBytes = Math.ceil(width / 8);
-
-  let escPosData = [];
-  for (let y = 0; y < height; y++) {
-    let rowBytes = [];
-    for (let x = 0; x < width; x += 8) {
-      let byte = 0;
-      for (let bit = 0; bit < 8; bit++) {
-        if (x + bit < width) {
-          const pixelIndex = (y * width + x + bit) * 4; // Assuming RGBA
-          const r = imageData[pixelIndex];
-          const g = imageData[pixelIndex + 1];
-          const b = imageData[pixelIndex + 2];
-          const grayscale = 0.3 * r + 0.59 * g + 0.11 * b;
-
-          if (grayscale <= 128) {
-            byte |= 1 << (7 - bit); // Set bit for black pixels
-          }
-        }
-      }
-      rowBytes.push(byte);
-    }
-    escPosData.push(Buffer.from(rowBytes));
-  }
-
-  return Buffer.concat(escPosData);
 }
 
 // Function: Generate ESC/POS commands for printing the image
