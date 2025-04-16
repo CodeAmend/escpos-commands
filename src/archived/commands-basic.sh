@@ -1,18 +1,41 @@
 #!/bin/bash
 
+box_full=$'\xDB'      # █ 
+box_medium=$'\xB2'    # ▒
+box_square=$'\xFE'    # ■
+check=$'\xFB'         # √
+cross=$'\xAF'         # ¯
+arrow_right=$'\x1A'   # → 
+arrow_left=$'\x1B'    # ←
+arrow_up=$'\x18'      # ↑
+arrow_down=$'\x19'    # ↓
+corner_ul=$'\xDA'     # ╔
+corner_ur=$'\xBF'     # ╗
+corner_ll=$'\xC0'     # ╚
+corner_lr=$'\xD9'     # ╝
+vertical=$'\xB3'      # │
+horizontal=$'\xC4'    # ─
+tee_left=$'\xB4'      # ┤
+tee_right=$'\xC3'     # ├
+tee_up=$'\xC1'        # ┴
+tee_down=$'\xC2'      # ┬
+plus=$'\xC5'          # ┼
+
+
 # Initialize printer
 init() {
   echo -ne "\x1B@"
   echo -ne "\x1B\x61\x01"  # Center alignment
 }
 
-# Print text
+
+# Print text: "message" [align]
 text() {
-  if [ $# -ne 1 ]; then
-    return 1
-  fi
-  echo -ne "\x1BA\x00\x1BM\x00$1"
+  local message="$1"
+  echo -ne "$message"
 }
+
+
 
 # Line breaks
 br() {
@@ -118,5 +141,68 @@ print_image_file() {
 
   # Read BMP file's pixel data (skipping the BMP header) and send it
   dd if="$pathToBmpFile" bs=1 skip=54 | lp -d EPSON_TM_T88V
+}
+
+set_print_direction() {
+  echo -ne "\x1B\x54\x00"  # ESC T 0 = Left to right, top to bottom
+}
+
+enter_page_mode() {
+  echo -ne "\x1B\x4C"  # ESC L
+}
+
+exit_page_mode() {
+  echo -ne "\x0C"  # FF
+}
+
+
+# set_position() {
+#   local x="$1" y="$2"
+
+#   local xL=$(printf '%02X' $((x & 0xFF)))
+#   local xH=$(printf '%02X' $((x >> 8)))
+#   local yL=$(printf '%02X' $((y & 0xFF)))
+#   local yH=$(printf '%02X' $((y >> 8)))
+
+#   echo -ne "\x1B\x24"
+#   printf "%b" "$(printf '\\x%s\\x%s\\x%s\\x%s' "$xL" "$xH" "$yL" "$yH")"
+# }
+
+define_page_area() {
+  local x="$1"
+  local y="$2"
+  local width="$3"
+  local height="$4"
+
+  local xL=$((x & 0xFF))
+  local xH=$((x >> 8))
+  local yL=$((y & 0xFF))
+  local yH=$((y >> 8))
+  local wL=$((width & 0xFF))
+  local wH=$((width >> 8))
+  local hL=$((height & 0xFF))
+  local hH=$((height >> 8))
+
+  printf "\x1B\x57"  # ESC W
+  printf "\\x%02X\\x%02X\\x%02X\\x%02X\\x%02X\\x%02X\\x%02X\\x%02X" \
+    "$xL" "$xH" "$yL" "$yH" "$wL" "$wH" "$hL" "$hH" | xargs printf
+}
+
+set_position() {
+  local x="$1"
+  local y="$2"
+
+  local xL=$((x & 0xFF))
+  local xH=$((x >> 8))
+  local yL=$((y & 0xFF))
+  local yH=$((y >> 8))
+
+  # ESC $ for X (horizontal)
+  printf "\x1B\x24"
+  printf "\\x%02X\\x%02X" "$xL" "$xH" | xargs printf
+
+  # GS $ for Y (vertical)
+  printf "\x1D\x24"
+  printf "\\x%02X\\x%02X" "$yL" "$yH" | xargs printf
 }
 
