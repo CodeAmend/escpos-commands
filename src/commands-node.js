@@ -1,9 +1,6 @@
 // escpos-utils.js
 const { Buffer } = require('buffer');
-
-// -- ESC/POS control constants --
-const ESC = 0x1B;
-const GS  = 0x1D;
+const { ESC, GS } = require('./hex-values');
 
 // -- Init printer --
 function init() {
