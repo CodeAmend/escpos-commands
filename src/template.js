@@ -1,3 +1,4 @@
+const { MODE } = require("./hex-values");
 // template.js
 const escpos = require('./commands-node');
 
@@ -5,7 +6,7 @@ const siteShort = "https://littlecaesars.com"
 
 const siteLong = "https://littlecaesars.com?orderId=1f2c9a6b-9824-4d63-a7d5-72b6323fbd1f&inventoryId=6a58c3d1-82b9-43d7-b241-2c93e44e2eb3&otherId=e5a3798a-bf56-4555-8702-313a4cb27263"
 
-const tx = 30;
+const tx = 45;
 
 const buffer = Buffer.concat([
     escpos.init(),
@@ -20,6 +21,7 @@ const buffer = Buffer.concat([
     escpos.setPosition(0, tx*2),
     escpos.text('canvas image'),
 
+    escpos.fontOptions([MODE.BOLD]),
     escpos.setPosition(0, tx*3),
     escpos.text('over here.'),
 
@@ -35,4 +37,3 @@ const buffer = Buffer.concat([
 
 // Output binary to stdout (for piping to lp)
 process.stdout.write(buffer);
-

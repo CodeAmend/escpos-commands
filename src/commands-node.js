@@ -19,6 +19,22 @@ function text(str) {
   return Buffer.from(str, 'ascii');
 }
 
+// Set Reverse Backgorund
+// GS B n
+// n = 0 or 1 (on)
+function setReverseBackground(isOn) {
+    const command = [ESC, 0x42];
+    return Buffer.from([...command, isOn ? 0x01 : 0x00];
+}
+
+
+// Font option: <Mode Array> [BOLD,UNDER]
+// ESC ! n
+function fontOptions(modeOptionArray) {
+    const finalHex = modeOptionArray.reduce((acc,val) => acc | val, 0);
+    return Buffer.from([ESC, 0x21, finalHex]) 
+}
+
 function qrcode(data, model = 2, size = 4) {
   const storeLen = data.length + 3;
   const pL = storeLen & 0xFF;
@@ -64,6 +80,7 @@ module.exports = {
   br,
   cut,
   text,
+  fontOptions,
   qrcode,
   enterPageMode,
   exitPageMode,
