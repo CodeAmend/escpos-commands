@@ -1,9 +1,12 @@
 // template.js
 const escpos = require('./commands-node');
-const { siteLong } = require('./values');
+const { siteLong, siteShort } = require('./values');
 
 const lineHeight = 40;
 const mult = 1;
+
+const qrXpos = 350;
+const qrYpos = -0;
 
 (async () => {
   const buffer = Buffer.concat([
@@ -15,14 +18,14 @@ const mult = 1;
 
     escpos.setPrintArea(0, 0, 550, 550), // ESC W: Print area (384x100 dots)
 
-    escpos.setPosition(350, 0),
-    escpos.qrcode(siteLong, 2, 3),
+    escpos.setPosition(qrXpos, qrYpos),
+    escpos.qrcode(siteShort, 2, 3),
 
     escpos.setPosition(0, lineHeight * 1),
-    escpos.printText("TL"),
+    escpos.printText(`QRX: ${qrXpos}`),
 
     escpos.setPosition(0, lineHeight * 6),
-    escpos.printText("BL"),
+    escpos.printText(`QRY: ${qrYpos}`),
 
 
     escpos.printPageMode(), // ESC FF (1B 0C): Print all
