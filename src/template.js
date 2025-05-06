@@ -19,23 +19,24 @@ const qrYpos = -0;
 
     escpos.selectFont(1), // Font B
     escpos.setCharacterSize(2, 2), // 2x size
-    escpos.setJustification('center'),
+    escpos.reverseBackground(true),
+    escpos.setJustification('left'),
     escpos.setPosition(10, 60),
     escpos.printText("Header"),
 
-    escpos.selectFont(1), // Font B
-    escpos.setCharacterSize(1, 1), // 2x size
-    escpos.setJustification('center'),
-    escpos.setPosition(10, 120),
-    escpos.printText("Header"),
+    // escpos.selectFont(1), // Font B
+    // escpos.setCharacterSize(2, 7), // 2x size
+    // escpos.setJustification('center'),
+    // escpos.setPosition(10, 220),
+    // escpos.printText("Header"),
 
-    escpos.selectTextMode({ bold: true }),
-    escpos.setPosition(10, 180),
-    escpos.printText("Bold Text"),
+    // escpos.selectTextMode({ bold: true }),
+    // escpos.setPosition(10, 180),
+    // escpos.printText("Bold Text"),
 
-    escpos.setUnderline(true),
-    escpos.setPosition(10, 220),
-    escpos.printText("Underlined"),
+    // escpos.setUnderline(true),
+    // escpos.setPosition(10, 220),
+    // escpos.printText("Underlined"),
 
     escpos.setPosition(350, 0),
     escpos.qrcode(siteLong, 2, 3),

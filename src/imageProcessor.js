@@ -1,14 +1,19 @@
+// imageProcessor.js
 const sharp = require('sharp');
-const { GS } = require('./values');
+const fs = require('fs');
 
-async function convertImageToRasterBuffer(imagePath) {
+async function convertImageToRasterBin(imagePath, outputBinPath, width = 384, height = 48) {
   const { data, info } = await sharp(imagePath)
-    .resize({ width: 384 })            // Adjust width for printer
-    .threshold(128)                    // Convert to B/W
+    .resize({ width, height, fit: 'fill' }) // Force exact size
+    .threshold(128) // Convert to B/W
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  const { width, height } = info;
+  const { width: imgWidth, height: imgHeight } = info;
+  if (imgWidth !== width || imgHeight !== height) {
+    throw new Error(`Image size mismatch: expected ${width}x${height}, got ${imgWidth}x${imgHeight}`);
+  }
+
   const bytesPerLine = Math.ceil(width / 8);
   const raster = Buffer.alloc(bytesPerLine * height);
 
@@ -25,14 +30,10 @@ async function convertImageToRasterBuffer(imagePath) {
     }
   }
 
-  const header = Buffer.from([
-    GS, 0x76, 0x30, 0x00,
-    bytesPerLine & 0xFF, (bytesPerLine >> 8) & 0xFF,
-    height & 0xFF, (height >> 8) & 0xFF
-  ]);
+  // Save raster data to .bin file
+  fs.writeFileSync(outputBinPath, raster);
 
-  return Buffer.concat([header, raster]);
+  return { width, height, data: raster };
 }
 
-module.exports = { convertImageToRasterBuffer };
-
+module.exports = { convertImageToRasterBin };

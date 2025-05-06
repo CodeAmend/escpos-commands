@@ -43,7 +43,7 @@ function setCharacterSpacing(n) {
 
 // Select print modes (font, bold, double-size)
 function selectTextMode({ font = 0, bold = false, doubleHeight = false, doubleWidth = false }) {
-  // ESC ! (1B 21): Select print modes
+  // ESC ! (1B 21): Select text modes
   let mode = 0;
   if (font === 1) mode |= 0x01; // Font B
   if (bold) mode |= 0x08; // Bold
