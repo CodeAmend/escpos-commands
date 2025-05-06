@@ -42,7 +42,7 @@ function setCharacterSpacing(n) {
 }
 
 // Select print modes (font, bold, double-size)
-function selectPrintMode({ font = 0, bold = false, doubleHeight = false, doubleWidth = false }) {
+function selectTextMode({ font = 0, bold = false, doubleHeight = false, doubleWidth = false }) {
   // ESC ! (1B 21): Select print modes
   let mode = 0;
   if (font === 1) mode |= 0x01; // Font B
@@ -296,7 +296,7 @@ module.exports = {
   cut,
   printText,
   setCharacterSpacing,
-  selectPrintMode,
+  selectTextMode,
   setUnderline,
   setDefaultLineSpacing,
   setLineSpacing,
