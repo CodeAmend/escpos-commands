@@ -15,33 +15,38 @@ const { siteLong } = require('./values');
     escpos.setPrintArea(0, 0, 500, 600), 
 
     // Icon at top-left
-    escpos.setPosition(0, 0),
+    escpos.setPosition(50, 50),
     escpos.rasterImage(width, height, data),
 
-    // Text beside icon
-    escpos.setPosition(20, 40),
     escpos.selectFont(1), // Font B
-    escpos.printText("Next to Icon"),
-
-    // Large 
-    escpos.setPosition(0, 120),
-    escpos.setCharacterSize(2, 2), // 2x2 size
-    escpos.printText("Large Text"),
-
-    // Small 20-char text 60 dots further
-    escpos.setPosition(0, 200),
-    escpos.setCharacterSize(1, 1), // Normal size
-    escpos.selectFont(1), // Font B
-    escpos.printText("Small Text 1234567890"),
-
-    // Reverse Text
-    escpos.setPosition(0, 280),
+    escpos.setCharacterSize(2, 2), // 2x size
     escpos.reverseBackground(true),
-    escpos.setCharacterSize(2, 2), // Normal size
-    escpos.selectFont(1), // Font B
-    escpos.printText("10 / 14"),
+    escpos.setJustification('left'),
 
-    // QR code on right
+    escpos.setPosition(5, 60),
+    escpos.printText(" P "),
+    escpos.setCharacterSize(1, 1), // 2x size
+    escpos.reverseBackground(false),
+    escpos.printText(" Damon | #1004488 "),
+
+    escpos.setPosition(5, 130),
+    escpos.setCharacterSize(2, 2), // 2x size
+    escpos.reverseBackground(false),
+    escpos.printText("ST CR ULT SUPREME"),
+
+    escpos.setPosition(5, 175),
+    escpos.setCharacterSize(1, 1), // 2x size
+    escpos.printText("SAUCE: XX CHZ: XX PEP: XX IS: XX B: XX"),
+    escpos.setPosition(5, 215),
+    escpos.printText("SAUCE: XX CHZ: XX PEP: XX IS: XX B: XX"),
+
+    escpos.setPosition(5, 285),
+    escpos.setCharacterSize(2, 2), // 2x size
+    escpos.reverseBackground(true),
+    escpos.printText("  9  "),
+    escpos.reverseBackground(false),
+    escpos.printText("  9225  "),
+
     escpos.setPosition(350, 0),
     escpos.qrcode(siteLong, 2, 3),
 
