@@ -1,6 +1,6 @@
 // template.js
-const escpos = require('./commands-node');
-const { siteLong, siteShort } = require('./values');
+const escpos = require('./src/commands-node');
+const { siteLong, siteShort } = require('./src/values');
 
 const lineHeight = 40;
 const mult = 1;
