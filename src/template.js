@@ -15,7 +15,7 @@ const { siteLong } = require('./values');
     escpos.setPrintArea(0, 0, 500, 600), 
 
     // Icon at top-left
-    escpos.setPosition(50, 50),
+    escpos.setPosition(0, 0),
     escpos.rasterImage(width, height, data),
 
     // Text beside icon
@@ -23,11 +23,7 @@ const { siteLong } = require('./values');
     escpos.selectFont(1), // Font B
     escpos.printText("Next to Icon"),
 
-    // QR code on right
-    escpos.setPosition(350, 0),
-    escpos.qrcode(siteLong, 2, 3),
-
-    // Large text 60 dots down
+    // Large 
     escpos.setPosition(0, 120),
     escpos.setCharacterSize(2, 2), // 2x2 size
     escpos.printText("Large Text"),
@@ -37,6 +33,17 @@ const { siteLong } = require('./values');
     escpos.setCharacterSize(1, 1), // Normal size
     escpos.selectFont(1), // Font B
     escpos.printText("Small Text 1234567890"),
+
+    // Reverse Text
+    escpos.setPosition(0, 280),
+    escpos.reverseBackground(true),
+    escpos.setCharacterSize(2, 2), // Normal size
+    escpos.selectFont(1), // Font B
+    escpos.printText("10 / 14"),
+
+    // QR code on right
+    escpos.setPosition(350, 0),
+    escpos.qrcode(siteLong, 2, 3),
 
     escpos.printPageMode(),
     escpos.cut(),
