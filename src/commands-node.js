@@ -32,6 +32,117 @@ function printText(str) {
   return Buffer.from(str, 'ascii');
 }
 
+// Set right-side character spacing
+function setCharacterSpacing(n) {
+  // ESC SP (1B 20): Set right-side spacing (0-255 dots)
+  if (n < 0 || n > 255 || isNaN(n)) {
+    throw new Error(`Spacing must be between 0-255 (${n})`);
+  }
+  return Buffer.from([ESC, 0x20, n]);
+}
+
+// Select print modes (font, bold, double-size)
+function selectPrintMode({ font = 0, bold = false, doubleHeight = false, doubleWidth = false }) {
+  // ESC ! (1B 21): Select print modes
+  let mode = 0;
+  if (font === 1) mode |= 0x01; // Font B
+  if (bold) mode |= 0x08; // Bold
+  if (doubleHeight) mode |= 0x10; // Double height
+  if (doubleWidth) mode |= 0x20; // Double width
+  return Buffer.from([ESC, 0x21, mode]);
+}
+
+// Enable/disable underline
+function setUnderline(on = true, thickness = 1) {
+  // ESC - (1B 2D): Turn underline on/off (0=off, 1=1-dot, 2=2-dot)
+  const n = on ? (thickness === 2 ? 2 : 1) : 0;
+  return Buffer.from([ESC, 0x2D, n]);
+}
+
+// Set default line spacing
+function setDefaultLineSpacing() {
+  // ESC 2 (1B 32): Set default line spacing (~1/6 inch)
+  return Buffer.from([ESC, 0x32]);
+}
+
+// Set custom line spacing
+function setLineSpacing(n) {
+  // ESC 3 (1B 33): Set line spacing (0-255 dots)
+  if (n < 0 || n > 255 || isNaN(n)) {
+    throw new Error(`Line spacing must be between 0-255 (${n})`);
+  }
+  return Buffer.from([ESC, 0x33, n]);
+}
+
+// Select character font
+function selectFont(font) {
+  // ESC M (1B 4D): Select font (0=Font A, 1=Font B)
+  if (font !== 0 && font !== 1) {
+    throw new Error(`Font must be 0 (Font A) or 1 (Font B) (${font})`);
+  }
+  return Buffer.from([ESC, 0x4D, font]);
+}
+
+// Select international character set
+function selectInternationalCharacterSet(n) {
+  // ESC R (1B 52): Select international character set (0-13)
+  if (n < 0 || n > 13 || isNaN(n)) {
+    throw new Error(`Character set must be between 0-13 (${n})`);
+  }
+  return Buffer.from([ESC, 0x52, n]);
+}
+
+// Enable/disable 90° clockwise rotation
+function setRotation(on = true) {
+  // ESC V (1B 56): Turn 90° rotation on/off (0=off, 1=on)
+  return Buffer.from([ESC, 0x56, on ? 1 : 0]);
+}
+
+// Set relative horizontal print position
+function setRelativeHorizontalPosition(n) {
+  // ESC \ (1B 5C): Set relative horizontal position (-32768 to 32767 dots)
+  if (n < -32768 || n > 32767 || isNaN(n)) {
+    throw new Error(`Position must be between -32768 and 32767 (${n})`);
+  }
+  const [nL, nH] = getLH(n);
+  return Buffer.from([ESC, 0x5C, nL, nH]);
+}
+
+// Set text justification
+function setJustification(align) {
+  // ESC a (1B 61): Set justification (0=left, 1=center, 2=right)
+  const n = align === 'center' ? 1 : align === 'right' ? 2 : 0;
+  return Buffer.from([ESC, 0x61, n]);
+}
+
+// Print and feed n lines
+function printAndFeedLines(lines) {
+  // ESC d (1B 64): Print and feed n lines (0-255)
+  if (lines < 0 || lines > 255 || isNaN(lines)) {
+    throw new Error(`Lines must be between 0-255 (${lines})`);
+  }
+  return Buffer.from([ESC, 0x64, lines]);
+}
+
+// Enable/disable upside-down printing
+function setUpsideDown(on = true) {
+  // ESC { (1B 7B): Turn upside-down printing on/off
+  return Buffer.from([ESC, 0x7B, on ? 1 : 0]);
+}
+
+// Select character size
+function setCharacterSize(width = 1, height = 1) {
+  // GS ! (1D 21): Select character size (0-7 for width/height)
+  if (width < 0 || width > 7 || isNaN(width)) {
+    throw new Error(`Width magnification must be between 0-7 (${width})`);
+  }
+  if (height < 0 || height > 7 || isNaN(height)) {
+    throw new Error(`Height magnification must be between 0-7 (${height})`);
+  }
+  const n = ((width - 1) << 4) | (height - 1);
+  return Buffer.from([GS, 0x21, n]);
+}
+
 // Enable/disable reverse background (white on black)
 function reverseBackground(isOn) {
   // GS B (1D 42): Reverse printing
@@ -184,6 +295,19 @@ module.exports = {
   lineFeed,
   cut,
   printText,
+  setCharacterSpacing,
+  selectPrintMode,
+  setUnderline,
+  setDefaultLineSpacing,
+  setLineSpacing,
+  selectFont,
+  selectInternationalCharacterSet,
+  setRotation,
+  setRelativeHorizontalPosition,
+  setJustification,
+  printAndFeedLines,
+  setUpsideDown,
+  setCharacterSize,
   reverseBackground,
   qrcode,
   enterPageMode,
