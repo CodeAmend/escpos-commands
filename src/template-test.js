@@ -1,5 +1,4 @@
 const escpos = require('./commands-node');
-const { convertImageToRasterData } = require('./imageProcessor');
 const { siteLong } = require('./values');
 
 const tests = [
@@ -94,7 +93,6 @@ const tests = [
 ];
 
 (async () => {
-  const { width, height, data } = await convertImageToRasterData('./images/man.png', 16, 29);
 
   const buffers = tests.map(test => Buffer.concat([
     escpos.init(), // ESC @ (1B 40): Initialize
