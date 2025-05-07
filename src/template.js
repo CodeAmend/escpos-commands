@@ -12,7 +12,7 @@ const { siteShort, siteMedium, siteLong } = require('./values');
     Buffer.from([0x1B, 0x74, 0x00]), // ESC t 0: PC437 code page
 
     escpos.enterPageMode(),
-    escpos.setPrintArea(0, 0, 500, 600), 
+    escpos.setPrintArea(0, 0, 512, 550), 
 
     // Icon at top-left
     escpos.setPosition(50, 50),
