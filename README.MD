@@ -90,48 +90,107 @@ Sets multiple font attributes via 8-bit parameter `n` (0–255).
 - Ensure content fits 512-dot (72mm) printable width.  
 - Test with TM-Utility.
 
-## ASCII, Hex, and Binary in ESC/POS
 
-**Overview**:  
-ESC/POS commands use ASCII, hex, and binary for communication.  
+Apologies for the mix-up. Below is the new section for QR Code, Barcode, and related functions (e.g., 2D codes like PDF417) for the Epson TM-T88V, formatted in raw Markdown as requested, focusing on ESC/POS commands relevant to these features.
 
-- **ASCII**: Readable characters (e.g., `ESC` = code 27). Used in docs.  
-- **Hex**: Two-digit byte representation (e.g., `1B` for `ESC`). Sent to printer.  
-- **Binary**: 8-bit values (e.g., `00011011` for `1B`). Used for bit settings.  
+## Barcode and 2D Code Commands
 
-**How It Works**:  
-- Commands sent as hex bytes (e.g., `1B 21 88` for `ESC ! 0x88`).  
-- Printer interprets hex as binary for bit settings (e.g., `0x88` = `10001000`, bold [bit 3], underline [bit 7]).  
-- ASCII in docs (e.g., `ESC ! n`) converts to hex/binary for transmission.
+Commands for printing barcodes, QR codes, and other 2D codes (e.g., PDF417) on the TM-T88V. All measurements in dots (180 DPI, ~7.09 dots/mm). Max printable width: 512 dots (72mm) for 80mm paper.
 
-**Conversion Example**:  
-- Command: `ESC !` for bold + underline.  
-- ASCII: `ESC` (27), `!` (33), `n` = `0x88`.  
-- Hex: `1B 21 88`.  
-- Binary: `00011011 00100001 10001000`.  
+- **GS w (Set Barcode Width)**  
+  Syntax: `GS w n` (`1D 77 n`)  
+  Sets barcode module width: `n` = 2–6 (dots, ~0.28–0.85mm).  
+  Default: `n=3` (~0.42mm).  
+  Smaller `n` saves space; larger `n` improves readability.
 
-**Getting Binary (e.g., `0x88` = `10001000`)**:  
-1. Identify desired attributes (e.g., bold [bit 3], underline [bit 7]).  
-2. Set bits to 1: Bit 7 = 1, Bit 3 = 1, others 0 → `10001000`.  
-3. Convert binary to hex:  
-   - Split: `1000 1000`.  
-   - Left 4 bits: `1000` = 8 (8×2^3).  
-   - Right 4 bits: `1000` = 8 (8×2^3).  
-   - Combine: `8 8` = `0x88`.  
-4. Alternatively, calculate decimal: `2^7 (128) + 2^3 (8) = 136` → `0x88`.  
-5. Send: `ESC ! 0x88` (`1B 21 88`).
+- **GS h (Set Barcode Height)**  
+  Syntax: `GS h n` (`1D 68 n`)  
+  Sets barcode height: `n` = 1–255 (dots, ~0.14–36mm).  
+  Default: `n=162` (~22.85mm).  
+  Adjust to fit layout or scanner requirements.
 
-**Confusion for New Devs**:  
-- **ASCII vs. Hex**: Docs show `ESC M 0`, but send `1B 4D 00`. Sending ASCII literals fails.  
-- **Bit Errors**: Misinterpreting `n` (e.g., decimal 88 vs. `0x88`) breaks commands.  
-- **Hex Bytes**: `1B` is one byte, not ASCII `1` + `B`.  
-- **Byte Order**: Multi-byte params (e.g., `nL nH`) need correct order.  
-- **Debugging**: Use `hexdump -C` to check sent bytes.
+- **GS H (Select HRI Position)**  
+  Syntax: `GS H n` (`1D 48 n`)  
+  Sets Human-Readable Interpretation (HRI) position:  
+  - `n=0`: None.  
+  - `n=1`: Above barcode.  
+  - `n=2`: Below barcode.  
+  - `n=3`: Above and below.  
+  HRI uses Font A/B (set via `ESC M`).
 
-**Tips**:  
-- Code in hex (e.g., `byte[] cmd = {0x1B, 0x21, 0x88};`).  
-- Use ASCII tables (`ESC` = `1B`) and binary for bits.  
-- Test with ESC/POS emulator or TM-Utility.
+- **GS f (Select HRI Font)**  
+  Syntax: `GS f n` (`1D 66 n`)  
+  Sets HRI font: `n=0` (Font A, 12×24), `n=1` (Font B, 9×17).  
+  Default: Font A.
+
+- **GS k (Print Barcode)**  
+  Syntax: `GS k m d1...dk NUL` (`1D 6B m d1...dk 00`) or `GS k m n d1...dn` (`1D 6B m n d1...dn`)  
+  Prints barcode. Two formats:  
+  - Format 1 (`m=0–6`): Data ends with `NUL` (ASCII 0).  
+    - `m=0`: UPC-A (11–12 digits).  
+    - `m=1`: UPC-E (6–8 digits).  
+    - `m=2`: EAN13 (12–13 digits).  
+    - `m=3`: EAN8 (7–8 digits).  
+    - `m=4`: Code39 (variable length, alphanumeric).  
+    - `m=5`: ITF (even-length digits).  
+    - `m=6`: Codabar (variable length, specific chars).  
+  - Format 2 (`m=65–73`): Length `n` (1–255 bytes) precedes data.  
+    - `m=65`: UPC-A.  
+    - `m=66`: UPC-E.  
+    - `m=67`: EAN13.  
+    - `m=68`: EAN8.  
+    - `m=69`: Code39.  
+    - `m=70`: ITF.  
+    - `m=71`: Codabar.  
+    - `m=72`: Code93 (variable length, ASCII).  
+    - `m=73`: Code128 (variable length, with font switching `{A`, `{B`, `{C`).  
+  Example: Code128 for “PQR123” → `GS k 73 7 123 80 81 82 49 50 51` (`7` = length, `123` = `{`, `80–82` = PQR, `49–51` = 123).
+
+- **GS ( k (2D Codes: QR Code, PDF417)**  
+  Syntax: `GS ( k pL pH cn fn [params]` (`1D 28 6B pL pH cn fn ...`)  
+  Processes QR Code and PDF417. `pL pH` = parameter length (bytes). `cn=49` (2D codes). Functions:  
+
+  - **Function 165 (QR Code: Select Model)**  
+    Syntax: `GS ( k 04 00 31 41 n1 n2`  
+    Selects QR model: `n1=49` (Model 1), `50` (Model 2, default), `51` (Micro QR). `n2=0`.  
+    Example: `1D 28 6B 04 00 31 41 50 00` (Model 2).
+
+  - **Function 167 (QR Code: Set Module Size)**  
+    Syntax: `GS ( k 03 00 31 43 n`  
+    Sets QR module size: `n=1–16` (dots, ~0.14–2.26mm).  
+    Default: `n=3` (~0.42mm).  
+    Example: `1D 28 6B 03 00 31 43 05` (~0.71mm, ~20mm QR).
+
+  - **Function 169 (QR Code: Set Error Correction)**  
+    Syntax: `GS ( k 03 00 31 45 n`  
+    Sets error correction:  
+    - `n=48`: Level L (7%).  
+    - `n=49`: Level M (15%, default).  
+    - `n=50`: Level Q (25%).  
+    - `n=51`: Level H (30%).  
+    Example: `1D 28 6B 03 00 31 45 49` (Level M).
+
+  - **Function 180 (QR Code: Store Data)**  
+    Syntax: `GS ( k pL pH 31 50 30 d1...dk`  
+    Stores QR data: `pL pH` = length (k+3), `d1...dk` = data (1–7096 bytes).  
+    Example: For “https://example.com” (20 chars): `pL=23`, `pH=0` → `1D 28 6B 17 00 31 50 30 ...` + ASCII data.
+
+  - **Function 181 (QR Code: Print)**  
+    Syntax: `GS ( k 03 00 31 51 30`  
+    Prints stored QR code.  
+    Example: `1D 28 6B 03 00 31 51 30`.
+
+  - **Function 065–069 (PDF417: Configure)**  
+    Similar to QR but for PDF417 (column/row settings, error correction).  
+    Use `fn=65–69` for setup, `fn=80` to store data, `fn=81` to print.  
+    Example: Set columns `GS ( k 03 00 31 66 n` (`n=0–30`).
+
+**Notes**:  
+- QR size depends on data length and module size (`fn=167`). Larger `n` or more data increases size (e.g., 14mm to 20mm with `n=5`).  
+- Barcodes must fit 512-dot width; adjust `GS w` or data length.  
+- Test with TM-Utility or ESC/POS emulator.  
+
+
 
 ## Page Mode Overview
 
@@ -271,5 +330,46 @@ Height: Line height is ~3.39mm (Font A) or ~2.40mm (Font B) per text line.
 Pixel-to-Dot Conversion: For design tools, 1 pixel ≈ 0.141mm (180 DPI).
 
 
-## Functions
+## ASCII, Hex, and Binary in ESC/POS
+
+**Overview**:  
+ESC/POS commands use ASCII, hex, and binary for communication.  
+
+- **ASCII**: Readable characters (e.g., `ESC` = code 27). Used in docs.  
+- **Hex**: Two-digit byte representation (e.g., `1B` for `ESC`). Sent to printer.  
+- **Binary**: 8-bit values (e.g., `00011011` for `1B`). Used for bit settings.  
+
+**How It Works**:  
+- Commands sent as hex bytes (e.g., `1B 21 88` for `ESC ! 0x88`).  
+- Printer interprets hex as binary for bit settings (e.g., `0x88` = `10001000`, bold [bit 3], underline [bit 7]).  
+- ASCII in docs (e.g., `ESC ! n`) converts to hex/binary for transmission.
+
+**Conversion Example**:  
+- Command: `ESC !` for bold + underline.  
+- ASCII: `ESC` (27), `!` (33), `n` = `0x88`.  
+- Hex: `1B 21 88`.  
+- Binary: `00011011 00100001 10001000`.  
+
+**Getting Binary (e.g., `0x88` = `10001000`)**:  
+1. Identify desired attributes (e.g., bold [bit 3], underline [bit 7]).  
+2. Set bits to 1: Bit 7 = 1, Bit 3 = 1, others 0 → `10001000`.  
+3. Convert binary to hex:  
+   - Split: `1000 1000`.  
+   - Left 4 bits: `1000` = 8 (8×2^3).  
+   - Right 4 bits: `1000` = 8 (8×2^3).  
+   - Combine: `8 8` = `0x88`.  
+4. Alternatively, calculate decimal: `2^7 (128) + 2^3 (8) = 136` → `0x88`.  
+5. Send: `ESC ! 0x88` (`1B 21 88`).
+
+**Confusion for Devs working with different data types**:  
+- **ASCII vs. Hex**: Docs show `ESC M 0`, but send `1B 4D 00`. Sending ASCII literals fails.  
+- **Bit Errors**: Misinterpreting `n` (e.g., decimal 88 vs. `0x88`) breaks commands.  
+- **Hex Bytes**: `1B` is one byte, not ASCII `1` + `B`.  
+- **Byte Order**: Multi-byte params (e.g., `nL nH`) need correct order.  
+- **Debugging**: Use `hexdump -C` to check sent bytes.
+
+**Tips**:  
+- Code in hex (e.g., `byte[] cmd = {0x1B, 0x21, 0x88};`).  
+- Use ASCII tables (`ESC` = `1B`) and binary for bits.  
+- Test with ESC/POS emulator or TM-Utility.
 

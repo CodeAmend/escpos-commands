@@ -1,0 +1,133 @@
+# Barcode and 2D Code Commands for TM-T88V
+
+This guide covers ESC/POS commands for printing barcodes and 2D codes (e.g., QR Code, PDF417) on the Epson TM-T88V thermal receipt printer. It includes all relevant commands, a QR Code overview explaining the multi-step process, and a full QR Code example. All measurements in dots (180 DPI, ~7.09 dots/mm). Printable width: 512 dots (72mm) for 80mm paper.
+
+## QR 1. Barcode and 2D Code Commands
+
+- **GS w (Set Barcode Width)**  
+  Syntax: `GS w n` (`1D 77 n`)  
+  Sets barcode module width: `n` = 2–6 (dots, ~0.28–0.85mm).  
+  Default: `n=3` (~0.42mm).  
+  Smaller `n` saves space; larger `n` improves readability.
+
+- **GS h (Set Barcode Height)**  
+  Syntax: `GS h n` (`1D 68 n`)  
+  Sets barcode height: `n` = 1–255 (dots, ~0.14–36mm).  
+  Default: `n=162` (~22.85mm).  
+  Adjust to fit layout or scanner requirements.
+
+- **GS H (Select HRI Position)**  
+  Syntax: `GS H n` (`1D 48 n`)  
+  Sets Human-Readable Interpretation (HRI) position:  
+  - `n=0`: None.  
+  - `n=1`: Above barcode.  
+  - `n=2`: Below barcode.  
+  - `n=3`: Above and below.  
+  HRI uses Font A/B (set via `ESC M`).
+
+- **GS f (Select HRI Font)**  
+  Syntax: `GS f n` (`1D 66 n`)  
+  Sets HRI font: `n=0` (Font A, 12×24), `n=1` (Font B, 9×17).  
+  Default: Font A.
+
+- **GS k (Print Barcode)**  
+  Syntax: `GS k m d1...dk NUL` (`1D 6B m d1...dk 00`) or `GS k m n d1...dn` (`1D 6B m n d1...dn`)  
+  Prints barcode. Two formats:  
+  - Format 1 (`m=0–6`): Data ends with `NUL` (ASCII 0).  
+    - `m=0`: UPC-A (11–12 digits).  
+    - `m=1`: UPC-E (6–8 digits).  
+    - `m=2`: EAN13 (12–13 digits).  
+    - `m=3`: EAN8 (7–8 digits).  
+    - `m=4`: Code39 (variable length, alphanumeric).  
+    - `m=5`: ITF (even-length digits).  
+    - `m=6`: Codabar (variable length, specific chars).  
+  - Format 2 (`m=65–73`): Length `n` (1–255 bytes) precedes data.  
+    - `m=65`: UPC-A.  
+    - `m=66`: UPC-E.  
+    - `m=67`: EAN13.  
+    - `m=68`: EAN8.  
+    - `m=69`: Code39.  
+    - `m=70`: ITF.  
+    - `m=71`: Codabar.  
+    - `m=72`: Code93 (variable length, ASCII).  
+    - `m=73`: Code128 (variable length, with font switching `{A`, `{B`, `{C`).  
+  Example: Code128 for “PQR123” → `GS k 73 7 123 80 81 82 49 50 51` (`7` = length, `123` = `{`, `80–82` = PQR, `49–51` = 123).
+
+## 2. QR Code Overview
+
+QR Code printing requires multiple `GS ( k` commands to configure the model, module size, error correction, data, and printing. This multi-step process ensures flexibility but requires careful setup to fit within the 512-dot (72mm) printable width and meet scanner requirements.
+
+### Why Use QR Codes?
+- **Data Storage**: Encodes URLs, contact info, or payment details.  
+- **Compact**: High data density in small space.  
+- Амортизируемое имущество**: Common for mobile payments or ticketing.
+
+### How to Print a QR Code
+1. Select model (`fn=165`): Choose QR Code type (e.g., Model 2).  
+2. Set module size (`fn=167`): Define dot size for readability (e.g., 5 dots).  
+3. Set error correction (`fn=169`): Balance data recovery vs. size (e.g., Level M).  
+4. Store data (`fn=180`): Input the string (e.g., URL).  
+5. Print (`fn=181`): Output the QR Code.
+
+## 3. GS ( k (2D Codes: QR Code, PDF417)
+
+Syntax: `GS ( k pL pH cn fn [params]` (`1D 28 6B pL pH cn fn ...`)  
+Processes QR Code and PDF417. `pL pH` = parameter length (bytes). `cn=49` (2D codes). Functions:
+
+- **Function 165 (QR Code: Select Model)**  
+  Syntax: `GS ( k 04 00 31 41 n1 n2`  
+  Selects QR model: `n1=49` (Model 1), `50` (Model 2, default), `51` (Micro QR). `n2=0`.  
+  Example: `1D 28 6B 04 00 31 41 50 00` (Model 2).
+
+- **Function 167 (QR Code: Set Module Size)**  
+  Syntax: `GS ( k 03 00 31 43 n`  
+  Sets QR module size: `n=1–16` (dots, ~0.14–2.26mm).  
+  Default: `n=3` (~0.42mm).  
+  Example: `1D 28 6B 03 00 31 43 05` (~0.71mm).
+
+- **Function 169 (QR Code: Set Error Correction)**  
+  Syntax: `GS ( k 03 00 31 45 n`  
+  Sets error correction:  
+  - `n=48`: Level L (7%).  
+  - `n=49`: Level M (15%, default).  
+  - `n=50`: Level Q (25%).  
+  - `n=51`: Level H (30%).  
+  Example: `1D 28 6B 03 00 31 45 49` (Level M).
+
+- **Function 180 (QR Code: Store Data)**  
+  Syntax: `GS ( k pL pH 31 50 30 d1...dk`  
+  Stores QR data: `pL pH` = length (k+3), `d1...dk` = data (1–7096 bytes).  
+  Example: For “https://example.com” (20 chars): `pL=23`, `pH=0` → `1D 28 6B 17 00 31 50 30 ...` + ASCII data.
+
+- **Function 181 (QR Code: Print)**  
+  Syntax: `GS ( k 03 00 31 51 30`  
+  Prints stored QR code.  
+  Example: `1D 28 6B 03 00 31 51 30`.
+
+- **Function 065–069 (PDF417: Configure)**  
+  Similar to QR but for PDF417 (column/row settings, error correction).  
+  Use `fn=65–69` for setup, `fn=80` to store data, `fn=81` to print.  
+  Example: Set columns `GS ( k 03 00 31 66 n` (`n=0–30`).
+
+## 4. Full QR Code Example
+
+Print a QR Code for “https://example.com” with Model 2, module size 5 (~0.71mm), and Level M error correction.
+
+**Steps and Commands**:  
+1. Select Model 2: `GS ( k 04 00 31 41 50 00` (`1D 28 6B 04 00 31 41 50 00`).  
+2. Set module size 5: `GS ( k 03 00 31 43 05` (`1D 28 6B 03 00 31 43 05`).  
+3. Set error correction Level M: `GS ( k 03 00 31 45 49` (`1D 28 6B 03 00 31 45 49`).  
+4. Store data “https://example.com” (20 chars): `GS ( k 23 00 31 50 30` + ASCII data (`1D 28 6B 17 00 31 50 30 68 74 7464073 70 73 3A 2F 2F 65 78 61 6D 70 6C 65 2E 63 6F 6D`).  
+5. Print QR Code: `GS ( k 03 00 31 51 30` (`1D 28 6B 03 00 31 51 30`).
+
+**Hex Sequence**:  
+```
+1D 28 6B 04 00 31 41 50 00 1D 28 6B 03 00 31 43 05 1D 28 6B 03 00 31 45 49 1D 28 6B 17 00 31 50 30 68 74 74 70 73 3A 2F 2F 65 78 61 6D 70 6C 65 2E 63 6F 6D 1D 28 6B 03 00 31 51 30
+```
+
+## Notes
+- **QR Size**: Depends on data length and module size (`fn=167`). Example above (~20mm square with `n=5`, 20 chars).  
+- **Fit Limits**: Ensure barcode/QR fits 512-dot width; adjust `GS w` or `fn=167`.  
+- **Testing**: Use TM-Utility or ESC/POS emulator to verify scannability.  
+- **Code128 Fonts**: Use `{A`, `{B`, `{C` for specific character sets (e.g., `{C` for digits).  
+- Refer to TM-T88V ESC/POS manual for details.

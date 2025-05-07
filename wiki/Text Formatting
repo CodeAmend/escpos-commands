@@ -1,0 +1,93 @@
+# Text Formatting Commands for TM-T88V
+
+This guide covers ESC/POS commands for text formatting on the Epson TM-T88V thermal receipt printer. It includes all text-related commands, with a focus on `ESC !` (Master Font Settings) and its bit-setting examples. Notes on column limits and printable area are provided for practical use. All measurements in dots (180 DPI, ~7.09 dots/mm). Printable width: 512 dots (72mm) for 80mm paper.
+
+## Text Formatting Commands
+
+- **ESC M (Select Font)**  
+  Syntax: `ESC M n` (`1B 4D n`)  
+  Selects font type:  
+  - `n=0`: Font A (12×24 dots, 42 columns).  
+  - `n=1`: Font B (9×17 dots, 56 columns).
+
+- **ESC SP (Set Right-Side Character Spacing)**  
+  Syntax: `ESC SP n` (`1B 20 n`)  
+  Adds `n` dots (0–255) to right of each character.  
+  Default: `n=0`.  
+  Increases width without affecting height.
+
+- **GS ! (Set Character Size)**  
+  Syntax: `GS ! n` (`1D 21 n`)  
+  Scales width/height (1× to 8×):  
+  - Bits 0–2: Width (0=1×, 1=2×, ..., 7=8×).  
+  - Bits 4–6: Height (0=1×, 1=2×, ..., 7=8×).  
+  Example: `GS ! 0x11` → 2× width/height (Font A: 24×48 dots, ~21 columns).  
+  Font A: 12×24 (1×) to 96×192 (8×).  
+  Font B: 9×17 (1×) to 72×136 (8×).
+
+- **ESC ! (Master Font Settings)**  
+  Syntax: `ESC ! n` (`1B 21 n`)  
+  Sets multiple attributes via 8-bit `n` (0–255).  
+  **Bit Settings**:  
+  - Bit 0: Font (0 = Font A, 1 = Font B).  
+  - Bit 1: Unused (0).  
+  - Bit 2: Unused (0).  
+  - Bit 3: Bold (0 = off, 1 = on).  
+  - Bit 4: Double-height (0 = off, 1 = on).  
+  - Bit 5: Double-width (0 = off, 1 = on).  
+  - Bit 6: Unused (0).  
+  - Bit 7: Underline (0 = off, 1 = on).  
+  **Bit Examples**:  
+  - Bold + Underline: Bits 3, 7 = 1 → `10001000` = `0x88` → `ESC ! 0x88`.  
+  - Font B + Bold + Double-width: Bits 0, 3, 5 = 1 → `00101001` = `0x29` → `ESC ! 0x29`.  
+  - Font A + Double-height + Double-width + Underline: Bits 4, 5, 7 = 1 → `10110000` = `0xB0` → `ESC ! 0xB0`.  
+  **Notes**: Combines attributes efficiently. Double-width/height reduces columns (e.g., Font A: 42 → ~21 at 2×).
+
+- **ESC - (Underline)**  
+  Syntax: `ESC - n` (`1B 2D n`)  
+  Sets underline: `n=0` (off), `n=1` (1-dot), `n=2` (2-dot).
+
+- **ESC E (Bold)**  
+  Syntax: `ESC E n` (`1B 45 n`)  
+  Toggles bold: `n=0` (off), `n=1` (on).
+
+- **ESC G (Double-Strike)**  
+  Syntax: `ESC G n` (`1B 47 n`)  
+  Toggles double-strike (like bold): `n=0` (off), `n=1` (on).
+
+- **ESC { (Upside-Down)**  
+  Syntax: `ESC { n` (`1B 7B n`)  
+  Prints upside-down: `n=0` (off), `n=1` (on).  
+  Page Mode only.
+
+- **ESC V (90° Rotation)**  
+  Syntax: `ESC V n` (`1B 56 n`)  
+  Rotates text 90°: `n=0` (off), `n=1` (on).  
+  Page Mode only.
+
+- **ESC a (Alignment)**  
+  Syntax: `ESC a n` (`1B 61 n`)  
+  Aligns text: `n=0` (left), `n=1` (center), `n=2` (right).
+
+- **ESC d (Print and Feed)**  
+  Syntax: `ESC d n` (`1B 64 n`)  
+  Prints and feeds `n` lines (0–255).
+
+## Notes on Column Limits and Printable Area
+
+- **Column Limits**:  
+  - Font A: 42 columns (normal), ~21 at double-width (`ESC !` bit 5 or `GS !`).  
+  - Font B: 56 columns (normal), ~28 at double-width.  
+  - Scaling (`GS !`) reduces columns further (e.g., Font A at 8× width → ~5 columns).  
+  - Extra spacing (`ESC SP`) may reduce effective columns if exceeding 512 dots.  
+
+- **Printable Area**:  
+  - Max width: 512 dots (72mm) for 80mm paper.  
+  - Fixed margins: ~3.88mm (~27.5 dots) per side.  
+  - Ensure scaled text (e.g., `GS ! 0x77` for 8×) or long strings fit within 512 dots to avoid clipping.  
+
+- **Tips**:  
+  - Use Font B for compact text (more columns).  
+  - Test layouts with TM-Utility or emulator to verify alignment.  
+  - Calculate total width (columns × dot width + spacing) before printing.  
+  - Refer to TM-T88V ESC/POS manual for details.

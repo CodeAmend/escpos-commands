@@ -1,0 +1,72 @@
+# ESC/POS Basics for TM-T88V
+
+This guide introduces ESC/POS, the command language for the Epson TM-T88V (also IV) thermal receipt printer, covering its structure, how to send commands, printer setup, testing tools, and ASCII/Hex/Binary fundamentals. Designed for new developers to quickly grasp the basics.
+
+## What is ESC/POS?
+
+ESC/POS (Epson Standard Code for Point of Sale) is a command set for controlling receipt printers like the TM-T88V. It uses byte sequences to format text, set layouts, print barcodes, and more. Commands are sent as hexadecimal (hex) bytes over USB, serial, or network interfaces.
+
+- **Command Structure**: Commands start with an ASCII control character (e.g., `ESC` or `GS`), followed by a function code and parameters.  
+  Example: `ESC ! n` (`1B 21 n` in hex) sets font attributes.
+- **Key Concept**: Commands are not text strings but raw bytes (e.g., `1B` = one byte, not ASCII `1` + `B`).
+
+## TM-T88V Printer UX specs
+
+The TM-T88V is a thermal receipt printer with the following specs:  
+- **Paper Width**: 80mm (~567 dots).  
+- **Printable Width**: 72mm (512 dots).  
+- **Resolution**: 180 DPI (~7.09 dots/mm, 1 dot ≈ 0.141mm).  
+- **Fonts**: Font A (12×24 dots, 42 columns), Font B (9×17 dots, 56 columns).  
+- **Modes**: Standard (line-by-line), Page Mode (canvas-based).
+
+## Sending ESC/POS Commands
+Commands are sent as hex bytes to the printer. Use a programming language or library to write bytes via the printer’s interface.
+
+## ASCII, Hex, and Binary in ESC/POS
+ESC/POS commands rely on ASCII, hex, and binary for encoding and bit-level control. Understanding these is critical to avoid errors.
+
+- **ASCII**: Human-readable characters with numeric codes (e.g., `ESC` = code 27, `!` = code 33). Used in docs for clarity.  
+- **Hex**: Two-digit byte representation (e.g., `1B` for `ESC`). Commands are sent as hex bytes.  
+- **Binary**: 8-bit values (e.g., `00011011` for `1B`). Used for bit settings in commands like `ESC !`.
+
+**How It Works**:  
+- Commands are sent as hex bytes (e.g., `1B 21 88` for `ESC ! 0x88`).  
+- Printer interprets hex as binary for bit settings (e.g., `0x88` = `10001000`, enabling bold [bit 3], underline [bit 7]).  
+- ASCII in docs (e.g., `ESC ! n`) is converted to hex/binary for transmission.
+
+**Conversion Example**:  
+- Command: `ESC !` for bold + underline.  
+- ASCII: `ESC` (27), `!` (33), `n` = `0x88`.  
+- Hex: `1B 21 88`.  
+- Binary: `00011011 00100001 10001000`.  
+- Sent as three bytes: `1B` (ESC), `21` (!), `88` (n).
+
+**Getting Binary (e.g., `0x88` = `10001000`)**:  
+1. Identify attributes (e.g., bold [bit 3], underline [bit 7]).  
+2. Set bits to 1: Bit 7 = 1, Bit 3 = 1, others 0 → `10001000`.  
+3. Convert to hex:  
+   - Split: `1000 1000`.  
+   - Left 4 bits: `1000` = 8 (8×2^3).  
+   - Right 4 bits: `1000` = 8 (8×2^3).  
+   - Combine: `8 8` = `0x88`.  
+4. Or calculate decimal: `2^7 (128) + 2^3 (8) = 136` → `0x88`.  
+5. Send: `ESC ! 0x88` (`1B 21 88`).
+
+**Potential Confusion for Devs working with different data types**:  
+- **ASCII vs. Hex**: Docs show `ESC M 0`, but send `1B 4D 00`. Sending ASCII literals (e.g., string “ESC”) fails.  
+- **Bit Manipulation**: Commands like `ESC !` require binary (e.g., `0x88` = `10001000`). Using decimal 88 breaks functionality.  
+- **Hex Format**: `1B` is one byte, not ASCII `1` + `B`.  
+- **Byte Order**: Multi-byte params (e.g., `nL nH`) need correct order (`nL` first).  
+- **Debugging**: Use `hexdump -C` or serial monitor to verify bytes, as errors often stem from wrong encoding.
+
+**Tips**:  
+- Code in hex (e.g., `byte[] cmd = {0x1B, 0x21, 0x88};`).  
+- Use ASCII tables (`ESC` = `1B`, `!` = `21`) and binary for bit commands.  
+- Test with TM-Utility or emulator to catch encoding issues early.
+
+## Notes
+- Always refer to the TM-T88V ESC/POS manual for full command details. 
+   - https://download4.epson.biz/sec_pubs/pos/reference_en/escpos/index.html
+- Start with simple commands (e.g., `ESC @` + text) before tackling complex features like barcodes or Page Mode.  
+- Keep layouts within 512-dot width to avoid clipping.  
+- Use libraries for faster development, but understand raw bytes for debugging.

@@ -1,0 +1,84 @@
+# Page Mode Guide for TM-T88V
+
+This guide covers ESC/POS Page Mode for the Epson TM-T88V thermal receipt printer, including an overview, all relevant commands, and a simple example of printing text at specific coordinates. Page Mode enables canvas-based printing for precise layouts. All measurements in dots (180 DPI, ~7.09 dots/mm). Printable width: 512 dots (72mm) for 80mm paper.
+
+## Page Mode Overview
+
+Page Mode allows canvas-based printing, unlike Standard Mode’s line-by-line output. It buffers all print data (text, graphics, barcodes) in a defined print area, enabling precise placement via coordinates. Use it for complex layouts requiring absolute positioning, rotated text, or mixed content (e.g., logos with text). Data is composed in memory and printed with `FF`, ensuring alignment but requiring careful management to stay within the 512-dot (72mm) printable width.
+
+### Why Use Page Mode?
+- **Precise Positioning**: Place text/graphics at exact coordinates (e.g., `ESC $` for absolute positioning).  
+- **Flexible Layouts**: Supports text rotation (`ESC V`, `ESC {`), multiple print directions (`ESC T`), and mixed content.  
+- **Complex Receipts**: Ideal for structured designs (e.g., tables, logos, or multi-column text).  
+- **Buffered Output**: Composes entire layout before printing, ensuring consistent alignment.
+
+### How to Use Page Mode
+1. Enter Page Mode with `ESC L`.  
+2. Set print area with `ESC W` (max 512 dots wide, height variable).  
+3. Define print direction with `ESC T` (e.g., left-to-right, top-left origin).  
+4. Position content using `ESC $` (absolute) or `ESC \` (relative).  
+5. Add text, graphics, or barcodes.  
+6. Print and eject with `FF`.  
+7. Exit to Standard Mode with `ESC S` if needed.
+
+## Page Mode Commands
+
+- **ESC L (Enter Page Mode)**  
+  Syntax: `ESC L` (`1B 4C`)  
+  Switches to Page Mode for canvas-based printing.
+
+- **ESC S (Enter Standard Mode)**  
+  Syntax: `ESC S` (`1B 53`)  
+  Exits Page Mode, returns to Standard Mode.
+
+- **ESC W (Set Print Area)**  
+  Syntax: `ESC W xL xH yL yH dxL dxH dyL dyH` (`1B 57 ...`)  
+  Sets print area (dots):  
+  - `(xL xH, yL yH)`: Top-left corner (0,0 default).  
+  - `(dxL dxH, dyL dyH)`: Width (≤512), height.  
+  Example: `ESC W 0 0 0 0 0 2 0 1` → 512×256 dots.
+
+- **ESC T (Set Print Direction)**  
+  Syntax: `ESC T n` (`1B 54 n`)  
+  Sets print direction and origin:  
+  - `n=0`: Left-to-right (0,0 top-left).  
+  - `n=1`: Bottom-to-top (0,0 bottom-left).  
+  - `n=2`: Right-to-left (0,0 bottom-right).  
+  - `n=3`: Top-to-bottom (0,0 top-right).
+
+- **ESC $ (Set Absolute Position)**  
+  Syntax: `ESC $ nL nH` (`1B 24 nL nH`)  
+  Sets horizontal position: `position = (nH × 256) + nL` dots.  
+  Max 512 dots. Relative to print area’s left edge.
+
+- **ESC \ (Set Relative Position)**  
+  Syntax: `ESC \ nL nH` (`1B 5C nL nH`)  
+  Moves position relative to current: `offset = (nH × 256) + nL` dots.  
+  Positive/negative for right/left.
+
+- **FF (Print and Eject)**  
+  Syntax: `FF` (`0C`)  
+  Prints all Page Mode data and ejects.
+
+## Simple Example: Text at Coordinates
+
+Print “Hello” at coordinates (100, 50) dots in Page Mode using Font A.
+
+**Steps and Commands**:  
+1. Initialize: `ESC @` (`1B 40`) – Reset printer.  
+2. Enter Page Mode: `ESC L` (`1B 4C`).  
+3. Set print area: `ESC W 0 0 0 0 0 2 0 1` (`1B 57 00 00 00 00 00 02 00 01`) – 512×256 dots.  
+4. Set direction (optional): `ESC T 0` (`1B 54 00`) – Left-to-right, (0,0) top-left.  
+5. Set position (optional): `ESC $ 100 0` (`1B 24 64 00`) – 100 dots (~14.1mm) from left (100 = `64` hex).  
+6. Select Font A (optional): `ESC M 0` (`1B 4D 00`).  
+7. Print text: `Hello` (ASCII `48 65 6C 6C 6F`).  
+8. Print and eject: `FF` (`0C`).  
+9. Exit Page Mode: `ESC S` (`1B 53`).
+
+
+## Notes
+- **Margins**: Fixed ~3.88mm (~27.5 dots) per side. (0,0) is top-left of print area (set by `ESC W`).  
+- **Limits**: Keep content within 512-dot width to avoid clipping.  
+- **Testing**: Use TM-Utility or ESC/POS emulator to verify positioning.  
+- **Use Case**: Ideal for logos, rotated text, or multi-column layouts.  
+- Refer to TM-T88V ESC/POS manual for details.

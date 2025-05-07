@@ -1,0 +1,89 @@
+# Troubleshooting and Best Practices for TM-T88V ESC/POS
+
+This guide provides troubleshooting tips, common errors, debugging techniques, and best practices for working with the Epson TM-T88V thermal receipt printer using ESC/POS commands. It helps developers avoid pitfalls and ensure reliable printing. All measurements in dots (180 DPI, ~7.09 dots/mm). Printable width: 512 dots (72mm) for 80mm paper.
+
+## Common Errors
+
+- **Wrong Hex Bytes**:  
+  - **Issue**: Sending ASCII literals (e.g., string “ESC M 0” instead of `1B 4D 00`) or incorrect hex (e.g., decimal 88 instead of `0x88` for `ESC !`).  
+  - **Symptoms**: No output, garbled text, or unexpected formatting.  
+  - **Fix**: Use hex bytes (e.g., `byte[] cmd = {0x1B, 0x4D, 0x00};`). Verify with ASCII table (`ESC` = `1B`).
+
+- **Clipping at 512 Dots**:  
+  - **Issue**: Content exceeds 512-dot (72mm) printable width (e.g., scaled text with `GS ! 0x77` or long barcode).  
+  - **Symptoms**: Text/barcode cut off or wraps incorrectly.  
+  - **Fix**: Calculate width (e.g., Font A at 2× width = 24 dots/char, 42 chars = 1008 dots > 512). Reduce scaling, font size, or data length.
+
+- **Incorrect Byte Order**:  
+  - **Issue**: Multi-byte parameters (e.g., `nL nH` in `ESC $`) sent in wrong order (e.g., `nH nL`).  
+  - **Symptoms**: Misaligned text or QR Code errors.  
+  - **Fix**: Send low byte first (e.g., 100 dots = `64 00` for `nL nH`).
+
+- **QR Code Too Large**:  
+  - **Issue**: Large module size (`GS ( k fn=167 n=16`) or excessive data exceeds 512 dots.  
+  - **Symptoms**: QR Code clipped or not printed.  
+  - **Fix**: Use smaller `n` (e.g., 3–5) or shorter data (e.g., <50 chars for ~20mm QR).
+
+- **Barcode Not Scannable**:  
+  - **Issue**: Module width too small (`GS w n=2`) or height too short (`GS h n<50`).  
+  - **Symptoms**: Scanner fails to read barcode.  
+  - **Fix**: Use `n=3–4` for `GS w` and `n=100–162` for `GS h`.
+
+- **Page Mode Misalignment**:  
+  - **Issue**: Incorrect print area (`ESC W`) or position (`ESC $`) settings.  
+  - **Symptoms**: Text/graphics misplaced or clipped.  
+  - **Fix**: Set area within 512 dots (e.g., `ESC W 0 0 0 0 0 2 0 1`) and verify coordinates.
+
+## Debugging Tips
+
+- **Verify Bytes with Hex Editor**:  
+  Use `hexdump -C` (Linux/macOS) or a hex editor (e.g., HxD on Windows) to inspect sent bytes.  
+  Example: `echo -ne '\x1B\x21\x88' | hexdump -C` should show `1B 21 88` (ESC ! bold + underline).  
+  Mismatch indicates encoding error (e.g., ASCII “1B” = `31 42`).
+
+- **Serial Monitor**:  
+  Use tools like PuTTY or CoolTerm to monitor raw byte traffic on serial ports. Ensure baud rate (e.g., 38400) matches printer settings.
+
+- **TM-Utility**:  
+  Epson’s TM-Utility (download from [Epson’s site](https://download.epson-biz.com)) allows sending test commands and checking printer status. Use to verify formatting or barcode scannability.
+
+- **ESC/POS Emulator**:  
+  Tools like `escpos-emulator` (Node.js) simulate printer output without hardware. Test complex sequences (e.g., Page Mode, QR Codes) before deploying.
+
+- **Printer Self-Test**:  
+  Hold feed button and power on to print config (firmware, interface settings). Confirms printer functionality and settings.
+
+- **Log Sent Commands**:  
+  In code, log hex bytes before sending (e.g., Python: `print(cmd.hex())`). Compare with expected sequence (e.g., `1B 40` for `ESC @`).
+
+## Best Practices
+
+- **Test Small Module Sizes for QR Codes**:  
+  Start with `GS ( k fn=167 n=3–5` (~0.42–0.71mm) for QR Codes to balance size and scannability. Larger `n` (e.g., 16) risks clipping or oversized output.
+
+- **Use Emulators for Development**:  
+  Develop with `escpos-emulator` or similar to iterate quickly without printing. Validate layouts before testing on hardware.
+
+- **Initialize Printer**:  
+  Always send `ESC @` (`1B 40`) at the start to reset settings, preventing residual formatting (e.g., bold from prior job).
+
+- **Fit Within 512 Dots**:  
+  Calculate total width (e.g., Font A: 42 cols × 12 dots = 504 dots; 2× width = 1008 dots). Adjust font, scaling, or spacing to avoid clipping.
+
+- **Test Barcode Scannability**:  
+  Print barcodes with `GS w n=3–4` and `GS h n=100–162`. Scan with target device to confirm readability before deployment.
+
+- **Use Libraries for Simplicity**:  
+  Libraries like `python-escpos` or `node-escpos` abstract raw bytes (e.g., `printer.text('Hello')`). Understand hex for debugging but leverage libraries for faster coding.
+
+- **Keep Data Concise**:  
+  Minimize QR Code/barcode data (e.g., short URLs, numeric-only Code128 `{C`) to reduce size and improve scan reliability.
+
+- **Document Commands**:  
+  Log hex sequences for each feature (e.g., QR Code: `1D 28 6B ...`). Reference TM-T88V ESC/POS manual for edge cases.
+
+## Notes
+- Regularly check printer status (e.g., paper out, cover open) via TM-Utility or status commands (`DLE EOT`).  
+- Test on actual hardware for final validation, as emulators may not catch all issues.  
+- Backup printer settings via TM-Utility before modifying (e.g., baud rate, margins).  
+- Refer to TM-T88V ESC/POS manual for detailed command specs.
