@@ -1,6 +1,8 @@
 const escpos = require('./commands-node');
 const { siteLong } = require('./values');
 
+const lineHeight = 40;
+
 (async () => {
   const buffer = Buffer.concat([
     escpos.init(), // ESC @ (1B 40): Initialize
@@ -17,38 +19,38 @@ const { siteLong } = require('./values');
     escpos.setBold(0), // ESC E 0: No bold
     escpos.setUnderline(0), // ESC - 0: No underline
     // Line 1: y=30
-    escpos.setPosition(0, 30),
-    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM"),
+    escpos.setPosition(0, lineHeight * 1),
+    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA"),
     // Line 2: y=60
-    escpos.setPosition(0, 60),
-    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM"),
+    escpos.setPosition(0, lineHeight * 2),
+    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA"),
     // Line 3: y=90
-    escpos.setPosition(0, 90),
-    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM"),
+    escpos.setPosition(0, lineHeight * 3),
+    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA"),
     // Line 4: y=120
-    escpos.setPosition(0, 120),
-    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM"),
+    escpos.setPosition(0, lineHeight * 4),
+    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA"),
     // Line 5: y=150
-    escpos.setPosition(0, 150),
-    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM"),
+    escpos.setPosition(0, lineHeight * 5),
+    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA"),
     // Line 6: y=180
-    escpos.setPosition(0, 180),
-    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM"),
+    escpos.setPosition(0, lineHeight * 6),
+    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA"),
     // Line 7: y=210
-    escpos.setPosition(0, 210),
-    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM"),
+    escpos.setPosition(0, lineHeight * 7),
+    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA"),
     // Line 8: y=240
-    escpos.setPosition(0, 240),
-    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM"),
+    escpos.setPosition(0, lineHeight * 8),
+    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA"),
     // Line 9: y=270
-    escpos.setPosition(0, 270),
-    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM"),
+    escpos.setPosition(0, lineHeight * 9),
+    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA"),
     // Line 10: y=300
-    escpos.setPosition(0, 300),
-    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM"),
+    escpos.setPosition(0, lineHeight * 10),
+    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA"),
     // Line 11: y=330
-    escpos.setPosition(0, 330),
-    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM"),
+    escpos.setPosition(0, lineHeight * 11),
+    escpos.printText("CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA"),
 
     // Right Area: QR Code at x=420
     escpos.setPrintArea(420, 0, 156, 330), // 420–576 dots, 156 dots wide
