@@ -1,4 +1,5 @@
 const siteShort = "https://littlecaesars.com";
+const siteMedium = "https://littlecaesars.com?orderId=1f2c9a6b-9824-4d63-a7d5-72b6323fbd1f&otherId=e5a3798a-bf56-4555-8702-313a4cb27263";
 const siteLong = "https://littlecaesars.com?orderId=1f2c9a6b-9824-4d63-a7d5-72b6323fbd1f&inventoryId=6a58c3d1-82b9-43d7-b241-2c93e44e2eb3&otherId=e5a3798a-bf56-4555-8702-313a4cb27263";
 
 
@@ -18,4 +19,4 @@ function hexAddition(hexArray) {
     return hexArray.reduce(( acc, val) => acc | val, 0)
 }
 
-module.exports = { ESC, GS, MODE, siteLong, siteShort }
+module.exports = { ESC, GS, MODE, siteLong, siteMedium, siteShort }

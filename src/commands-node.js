@@ -41,22 +41,14 @@ function setCharacterSpacing(n) {
   return Buffer.from([ESC, 0x20, n]);
 }
 
-// Select print modes (font, bold, double-size)
-function selectTextMode({ font = 0, bold = false, doubleHeight = false, doubleWidth = false }) {
-  // ESC ! (1B 21): Select text modes
-  let mode = 0;
-  if (font === 1) mode |= 0x01; // Font B
-  if (bold) mode |= 0x08; // Bold
-  if (doubleHeight) mode |= 0x10; // Double height
-  if (doubleWidth) mode |= 0x20; // Double width
-  return Buffer.from([ESC, 0x21, mode]);
-}
+function setBold(value = 1) {
+  return Buffer.from([ESC, 0x45, value]);
+};
 
 // Enable/disable underline
-function setUnderline(on = true, thickness = 1) {
+function setUnderline(thickness = 1) {
   // ESC - (1B 2D): Turn underline on/off (0=off, 1=1-dot, 2=2-dot)
-  const n = on ? (thickness === 2 ? 2 : 1) : 0;
-  return Buffer.from([ESC, 0x2D, n]);
+  return Buffer.from([ESC, 0x2D, thickness]);
 }
 
 // Set default line spacing
@@ -296,7 +288,6 @@ module.exports = {
   cut,
   printText,
   setCharacterSpacing,
-  selectTextMode,
   setUnderline,
   setDefaultLineSpacing,
   setLineSpacing,
@@ -324,5 +315,6 @@ module.exports = {
   resetMotionUnits,
   setLeftMargin,
   setPrintWidth,
+  setBold,
   rasterImage
 };

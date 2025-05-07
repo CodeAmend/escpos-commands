@@ -1,7 +1,7 @@
 // template.js
 const escpos = require('./commands-node');
 const { convertImageToRasterData } = require('./imageProcessor');
-const { siteShort, siteMedium, siteLong } = require('./values');
+const { siteLong } = require('./values');
 
 (async () => {
   // Convert man.png to raster data (16x29)
