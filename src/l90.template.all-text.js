@@ -2,7 +2,7 @@ const escpos = require('./commands-node');
 const { siteLong } = require('./values');
 
 const tests = [
-  // Font A (0), 1x1, Normal (35 chars)
+  // Font A (0), 1x1, Normal 
   {
     fontType: 0,
     fontW: 1,
@@ -10,10 +10,10 @@ const tests = [
     lineHeight: 40,
     bold: 0,
     underline: 0,
-    chars: "CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM",
+    chars: "CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA",
     charLength: 35
   },
-  // Font A (0), 2x2, Normal (17 chars)
+  // Font A (0), 2x2, Normal
   {
     fontType: 0,
     fontW: 2,
@@ -21,10 +21,10 @@ const tests = [
     lineHeight: 80,
     bold: 0,
     underline: 0,
-    chars: "BANGxBOOMxCRASHxW",
+    chars: "BANGxBOOMxCRASHx",
     charLength: 17
   },
-  // Font B (1), 1x1, Normal (46 chars)
+  // Font B (1), 1x1, Normal
   {
     fontType: 1,
     fontW: 1,
@@ -32,7 +32,7 @@ const tests = [
     lineHeight: 35,
     bold: 0,
     underline: 0,
-    chars: "FLASHxBANGxCRASHxBOOMxZAPxKABOOMxPOWxWHAMxSPARKxV",
+    chars: "FLASHxBANGxCRASHxBOOMxZAPxKABOOMxPOWxWHAMx",
     charLength: 46
   },
   // Font B (1), 2x2, Normal (23 chars)
@@ -43,7 +43,7 @@ const tests = [
     lineHeight: 70,
     bold: 0,
     underline: 0,
-    chars: "STARxMOONxSUNxCLOUDxRAIN",
+    chars: "STARxMOONxSUNxCLOUDxR",
     charLength: 23
   },
   // Font A (0), 1x1, Bold+Underline (35 chars)
@@ -54,7 +54,7 @@ const tests = [
     lineHeight: 40,
     bold: 1,
     underline: 1,
-    chars: "CRASHxBLASTxBOOMxWHAMxPOWxZAPxKABOOM",
+    chars: "CRASHxBLASTxBOOMxWHAMxPOWxZAPxKA",
     charLength: 35
   },
   // Font A (0), 2x2, Bold+Underline (17 chars)
@@ -65,7 +65,7 @@ const tests = [
     lineHeight: 80,
     bold: 1,
     underline: 1,
-    chars: "BANGxBOOMxCRASHxW",
+    chars: "BANGxBOOMxCRASHxR",
     charLength: 17
   },
   // Font B (1), 1x1, Bold+Underline (46 chars)
@@ -76,7 +76,7 @@ const tests = [
     lineHeight: 35,
     bold: 1,
     underline: 1,
-    chars: "FLASHxBANGxCRASHxBOOMxZAPxKABOOMxPOWxWHAMxSPARKxV",
+    chars: "FLASHxBANGxCRASHxBOOMxZAPxKABOOMxPOWxWHAMx",
     charLength: 46
   },
   // Font B (1), 2x2, Bold+Underline (23 chars)
@@ -87,7 +87,7 @@ const tests = [
     lineHeight: 70,
     bold: 1,
     underline: 1,
-    chars: "STARxMOONxSUNxCLOUDxRAIN",
+    chars: "STARxMOONxSUNxCLOUDxR",
     charLength: 23
   }
 ];
@@ -115,11 +115,11 @@ const tests = [
     escpos.setBold(1), // Bold
     escpos.setUnderline(0), // No underline
 
-    escpos.setPosition(0, test.lineHeight * 2),
+    escpos.setPosition(0, test.lineHeight * 3),
     escpos.printText(`:Font: ${test.fontType} :W:${test.fontW} :H:${test.fontH} :LineHeight: ${test.lineHeight}`),
-    escpos.setPosition(0, test.lineHeight * 2 + 34),
+    escpos.setPosition(0, test.lineHeight * 3 + 34),
     escpos.printText(`:Bold: ${test.bold} :Underline: ${test.underline}`),
-    escpos.setPosition(0, test.lineHeight * 2 + 68),
+    escpos.setPosition(0, test.lineHeight * 3 + 68),
     escpos.printText(`:CharLength: ${test.chars.length}`),
 
     escpos.setPosition(420, 0),
